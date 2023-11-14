@@ -30,6 +30,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(POST, "/api/signup").permitAll()
                         .requestMatchers(POST, "/api/login").permitAll()
+                        .requestMatchers(POST, "/api/refresh").permitAll()
                         .anyRequest().authenticated()
                 )
 
