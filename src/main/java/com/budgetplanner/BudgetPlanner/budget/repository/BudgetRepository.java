@@ -7,4 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface BudgetRepository extends JpaRepository<Budget, Long> {
+
+    @Query("SELECT b.category, SUM(b.budget) FROM Budget b GROUP BY b.category")
+    List<Object[]> findCategoryAndBudget();
 }

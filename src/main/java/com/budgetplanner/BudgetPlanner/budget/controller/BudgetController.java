@@ -1,5 +1,7 @@
 package com.budgetplanner.BudgetPlanner.budget.controller;
 
+import com.budgetplanner.BudgetPlanner.budget.dto.BudgetRecommendRequest;
+import com.budgetplanner.BudgetPlanner.budget.dto.BudgetRecommendResponse;
 import com.budgetplanner.BudgetPlanner.budget.dto.BudgetSettingsRequest;
 import com.budgetplanner.BudgetPlanner.budget.dto.CategoriesResponse;
 import com.budgetplanner.BudgetPlanner.budget.service.BudgetService;
@@ -36,4 +38,11 @@ public class BudgetController {
         return ResponseEntity.status(HttpStatus.CREATED).body(null);
     }
 
+    @GetMapping
+    public ResponseEntity<?> recommendBudgets(@RequestBody BudgetRecommendRequest request) {
+
+        List<BudgetRecommendResponse> list = budgetService.recommend(request);
+
+        return ResponseEntity.status(HttpStatus.OK).body(list);
+    }
 }

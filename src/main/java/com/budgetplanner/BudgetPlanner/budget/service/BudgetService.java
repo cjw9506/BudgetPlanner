@@ -1,5 +1,7 @@
 package com.budgetplanner.BudgetPlanner.budget.service;
 
+import com.budgetplanner.BudgetPlanner.budget.dto.BudgetRecommendRequest;
+import com.budgetplanner.BudgetPlanner.budget.dto.BudgetRecommendResponse;
 import com.budgetplanner.BudgetPlanner.budget.dto.BudgetSettingsRequest;
 import com.budgetplanner.BudgetPlanner.budget.dto.CategoriesResponse;
 import com.budgetplanner.BudgetPlanner.budget.entity.Budget;
@@ -17,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 
 @Service
@@ -61,5 +65,38 @@ public class BudgetService {
                         .build())
                 .forEach(budgetRepository::save);
     }
+
+
+    public List<BudgetRecommendResponse> recommend(BudgetRecommendRequest request) {
+        List<Object[]> data = budgetRepository.findCategoryAndBudget();
+        long[] budgets = data.stream().mapToLong(entry -> ((Number) entry[1]).longValue()).toArray();
+
+        double totalBudget = calculateTotalBudget(budgets);
+        double[] ratios = calculateRatios(budgets, totalBudget);
+
+        long userBudget = request.getBudget();
+
+        return IntStream.range(0, data.size())
+                .mapToObj(i -> createBudgetRecommendResponse(data.get(i), ratios[i], userBudget))
+                .collect(Collectors.toList());
+    }
+
+    private BudgetRecommendResponse createBudgetRecommendResponse(Object[] entry, double ratio, long userBudget) {
+        String categoryName = entry[0].toString();
+        Category category = Category.valueOf(categoryName);
+        long recommendedBudget = (long) (ratio * userBudget / 100.0);
+        return new BudgetRecommendResponse(category, recommendedBudget);
+    }
+
+    private double calculateTotalBudget(long[] budgets) {
+        return LongStream.of(budgets).sum();
+    }
+
+    private double[] calculateRatios(long[] budgets, double totalBudget) {
+        return LongStream.of(budgets)
+                .mapToDouble(budget -> budget / totalBudget * 100.0)
+                .toArray();
+    }
+
 
 }
