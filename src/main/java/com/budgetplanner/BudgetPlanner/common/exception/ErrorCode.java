@@ -16,6 +16,9 @@ public enum ErrorCode {
     //auth
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "A001", "잘못된 토큰입니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "A002", "만료된 토큰입니다."),
+
+    //budget
+    CATEGORY_MISSING(HttpStatus.BAD_REQUEST, "B001", "카테고리에 대한 예산을 모두 입력해주세요."),
     ;
 
     private final HttpStatus httpStatus;
