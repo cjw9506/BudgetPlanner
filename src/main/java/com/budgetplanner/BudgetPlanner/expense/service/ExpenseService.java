@@ -33,6 +33,7 @@ public class ExpenseService {
                 .spendingTime(LocalDateTime.now())
                 .memo(request.getMemo())
                 .user(user)
+                .excludeTotalExpenses(false)
                 .build();
 
         expenseRepository.save(expense);

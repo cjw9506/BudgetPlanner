@@ -29,12 +29,17 @@ public class Expense {
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
+    //지출 합계 제외
+    private boolean excludeTotalExpenses;
+
     @Builder
-    public Expense(LocalDateTime spendingTime, Long expenses, Category category, String memo, User user) {
+    public Expense(LocalDateTime spendingTime, Long expenses, Category category, String memo, User user,
+                   boolean excludeTotalExpenses) {
         this.spendingTime = spendingTime;
         this.expenses = expenses;
         this.category = category;
         this.memo = memo;
         this.user = user;
+        this.excludeTotalExpenses = excludeTotalExpenses;
     }
 }
