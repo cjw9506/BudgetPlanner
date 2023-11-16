@@ -64,4 +64,12 @@ public class ExpenseController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
     }
 
+    @PatchMapping("/{id}/exclude")
+    public ResponseEntity<?> excludeExpense(@PathVariable Long id,
+                                            Authentication authentication) {
+        expenseService.exclude(id, authentication);
+
+        return ResponseEntity.status(HttpStatus.OK).body(null);
+    }
+
 }

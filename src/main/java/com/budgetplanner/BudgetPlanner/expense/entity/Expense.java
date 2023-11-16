@@ -50,4 +50,12 @@ public class Expense {
         this.category = category != null ? category : this.category;
         this.memo = memo != null ? memo : this.memo;
     }
+
+    public void exclude() {
+        if (this.excludeTotalExpenses == true) {
+            this.excludeTotalExpenses = false;
+        } else {
+            this.excludeTotalExpenses = true;
+        }
+    }
 }

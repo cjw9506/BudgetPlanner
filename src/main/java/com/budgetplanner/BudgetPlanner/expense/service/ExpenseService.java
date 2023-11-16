@@ -101,4 +101,17 @@ public class ExpenseService {
 
         expenseRepository.deleteById(id);
     }
+
+    @Transactional
+    public void exclude(Long id, Authentication authentication) {
+        User user = userRepository.findByAccount(authentication.getName())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        Expense expense = expenseRepository.findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.EXPENSE_NOT_FOUND));
+
+        matchUser(authentication, expense);
+
+        expense.exclude();
+    }
 }
