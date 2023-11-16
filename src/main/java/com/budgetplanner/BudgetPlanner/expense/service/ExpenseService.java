@@ -5,6 +5,7 @@ import com.budgetplanner.BudgetPlanner.common.exception.ErrorCode;
 import com.budgetplanner.BudgetPlanner.expense.dto.CreateExpenseRequest;
 import com.budgetplanner.BudgetPlanner.expense.dto.GetExpenseResponse;
 import com.budgetplanner.BudgetPlanner.expense.dto.GetExpensesResponse;
+import com.budgetplanner.BudgetPlanner.expense.dto.UpdateExpenseRequest;
 import com.budgetplanner.BudgetPlanner.expense.entity.Expense;
 import com.budgetplanner.BudgetPlanner.expense.repository.ExpenseRepository;
 import com.budgetplanner.BudgetPlanner.user.entity.User;
@@ -77,5 +78,18 @@ public class ExpenseService {
         return expenseRepository.findByUser(user).stream()
                 .map(GetExpensesResponse::new)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void update(Long id, Authentication authentication, UpdateExpenseRequest request) {
+
+        userRepository.findByAccount(authentication.getName())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        Expense expense = expenseRepository.findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.EXPENSE_NOT_FOUND));
+
+        expense.update(request.getSpendingTime(), request.getExpenses(),
+                request.getCategory(), request.getMemo(), request.isExcludeTotalExpenses());
     }
 }

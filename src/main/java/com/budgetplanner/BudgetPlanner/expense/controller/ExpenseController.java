@@ -3,6 +3,7 @@ package com.budgetplanner.BudgetPlanner.expense.controller;
 import com.budgetplanner.BudgetPlanner.expense.dto.CreateExpenseRequest;
 import com.budgetplanner.BudgetPlanner.expense.dto.GetExpenseResponse;
 import com.budgetplanner.BudgetPlanner.expense.dto.GetExpensesResponse;
+import com.budgetplanner.BudgetPlanner.expense.dto.UpdateExpenseRequest;
 import com.budgetplanner.BudgetPlanner.expense.service.ExpenseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class ExpenseController {
     @PostMapping
     public ResponseEntity<?> createExpense(@Valid @RequestBody CreateExpenseRequest request,
                                            Authentication authentication) {
+        //todo 저장할때 지금 시간 말고 사용자가 지정한 시간으로 변경할 것
 
         expenseService.create(request, authentication);
 
@@ -43,6 +45,16 @@ public class ExpenseController {
         List<GetExpensesResponse> response = expenseService.getExpenses(authentication);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<?> updateExpense(@PathVariable Long id,
+                                           Authentication authentication,
+                                           @RequestBody UpdateExpenseRequest request) {
+
+        expenseService.update(id, authentication, request);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
     }
 
 }
