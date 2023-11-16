@@ -44,11 +44,10 @@ public class Expense {
     }
 
     public void update(LocalDateTime spendingTime, Long expenses
-            , Category category, String memo, boolean excludeTotalExpenses) {
+            , Category category, String memo) {
         this.spendingTime = spendingTime != null ? spendingTime : this.spendingTime;
         this.expenses = expenses != null ? expenses : this.expenses;
         this.category = category != null ? category : this.category;
         this.memo = memo != null ? memo : this.memo;
-        this.excludeTotalExpenses = excludeTotalExpenses != false ? excludeTotalExpenses : this.excludeTotalExpenses;
     }
 }

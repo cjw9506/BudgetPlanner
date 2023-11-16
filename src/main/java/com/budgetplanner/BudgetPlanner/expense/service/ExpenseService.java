@@ -90,7 +90,7 @@ public class ExpenseService {
 
 
         expense.update(request.getSpendingTime(), request.getExpenses(),
-                request.getCategory(), request.getMemo(), request.isExcludeTotalExpenses());
+                request.getCategory(), request.getMemo());
     }
 
 

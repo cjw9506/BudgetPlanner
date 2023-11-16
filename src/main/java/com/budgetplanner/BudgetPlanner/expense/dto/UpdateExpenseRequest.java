@@ -15,5 +15,4 @@ public class UpdateExpenseRequest {
     private Long expenses;
     private Category category;
     private String memo;
-    private boolean excludeTotalExpenses;
 }
