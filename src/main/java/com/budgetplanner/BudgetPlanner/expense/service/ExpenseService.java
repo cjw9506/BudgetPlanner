@@ -88,7 +88,17 @@ public class ExpenseService {
         Expense expense = expenseRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.EXPENSE_NOT_FOUND));
 
+
         expense.update(request.getSpendingTime(), request.getExpenses(),
                 request.getCategory(), request.getMemo(), request.isExcludeTotalExpenses());
+    }
+
+
+    @Transactional
+    public void delete(Long id, Authentication authentication) {
+        userRepository.findByAccount(authentication.getName())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        expenseRepository.deleteById(id);
     }
 }
