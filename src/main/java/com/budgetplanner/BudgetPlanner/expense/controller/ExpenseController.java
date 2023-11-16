@@ -24,7 +24,6 @@ public class ExpenseController {
     @PostMapping
     public ResponseEntity<?> createExpense(@Valid @RequestBody CreateExpenseRequest request,
                                            Authentication authentication) {
-        //todo 저장할때 지금 시간 말고 사용자가 지정한 시간으로 변경할 것
 
         expenseService.create(request, authentication);
 
