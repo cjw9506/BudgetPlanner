@@ -3,6 +3,7 @@ package com.budgetplanner.BudgetPlanner.expense.entity;
 import com.budgetplanner.BudgetPlanner.budget.entity.Category;
 import com.budgetplanner.BudgetPlanner.user.entity.User;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -28,6 +29,12 @@ public class Expense {
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
-
-
+    @Builder
+    public Expense(LocalDateTime spendingTime, Long expenses, Category category, String memo, User user) {
+        this.spendingTime = spendingTime;
+        this.expenses = expenses;
+        this.category = category;
+        this.memo = memo;
+        this.user = user;
+    }
 }
