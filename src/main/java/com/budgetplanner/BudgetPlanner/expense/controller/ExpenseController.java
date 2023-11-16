@@ -2,6 +2,7 @@ package com.budgetplanner.BudgetPlanner.expense.controller;
 
 import com.budgetplanner.BudgetPlanner.expense.dto.CreateExpenseRequest;
 import com.budgetplanner.BudgetPlanner.expense.dto.GetExpenseResponse;
+import com.budgetplanner.BudgetPlanner.expense.dto.GetExpensesResponse;
 import com.budgetplanner.BudgetPlanner.expense.service.ExpenseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,6 +33,14 @@ public class ExpenseController {
     public ResponseEntity<?> getExpense(@PathVariable Long id, Authentication authentication) {
 
         GetExpenseResponse response = expenseService.getExpense(id, authentication);
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getExpenses(Authentication authentication) {
+
+        List<GetExpensesResponse> response = expenseService.getExpenses(authentication);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

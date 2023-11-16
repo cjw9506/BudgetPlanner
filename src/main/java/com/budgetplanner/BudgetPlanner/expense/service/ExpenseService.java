@@ -4,6 +4,7 @@ import com.budgetplanner.BudgetPlanner.common.exception.CustomException;
 import com.budgetplanner.BudgetPlanner.common.exception.ErrorCode;
 import com.budgetplanner.BudgetPlanner.expense.dto.CreateExpenseRequest;
 import com.budgetplanner.BudgetPlanner.expense.dto.GetExpenseResponse;
+import com.budgetplanner.BudgetPlanner.expense.dto.GetExpensesResponse;
 import com.budgetplanner.BudgetPlanner.expense.entity.Expense;
 import com.budgetplanner.BudgetPlanner.expense.repository.ExpenseRepository;
 import com.budgetplanner.BudgetPlanner.user.entity.User;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -64,5 +67,15 @@ public class ExpenseService {
         if (!expense.getUser().getAccount().equals(authentication.getName())) {
             throw new CustomException(ErrorCode.EXPENSE_USER_MISMATCH);
         }
+    }
+
+    public List<GetExpensesResponse> getExpenses(Authentication authentication) {
+
+        User user = userRepository.findByAccount(authentication.getName())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        return expenseRepository.findByUser(user).stream()
+                .map(GetExpensesResponse::new)
+                .collect(Collectors.toList());
     }
 }
