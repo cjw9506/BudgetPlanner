@@ -88,6 +88,7 @@ public class ExpenseService {
         Expense expense = expenseRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.EXPENSE_NOT_FOUND));
 
+        matchUser(authentication, expense);
 
         expense.update(request.getSpendingTime(), request.getExpenses(),
                 request.getCategory(), request.getMemo());
