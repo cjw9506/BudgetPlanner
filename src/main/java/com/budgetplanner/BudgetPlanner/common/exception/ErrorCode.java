@@ -19,6 +19,10 @@ public enum ErrorCode {
 
     //budget
     CATEGORY_MISSING(HttpStatus.BAD_REQUEST, "B001", "카테고리에 대한 예산을 모두 입력해주세요."),
+
+    //expense
+    EXPENSE_NOT_FOUND(HttpStatus.NOT_FOUND, "E001", "해당 지출을 찾을 수 없습니다."),
+    EXPENSE_USER_MISMATCH(HttpStatus.BAD_REQUEST, "E002", "기록한 유저와 찾을 유저가 일치하지 않습니다.")
     ;
 
     private final HttpStatus httpStatus;
