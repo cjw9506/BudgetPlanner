@@ -27,4 +27,14 @@ public class GetExpensesResponse {
         this.memo = expense.getMemo();
         this.excludeTotalExpenses = expense.isExcludeTotalExpenses();
     }
+
+    @Builder
+    public GetExpensesResponse(Long id, Category category, Long expenses, LocalDateTime spendingTime, String memo, boolean excludeTotalExpenses) {
+        this.id = id;
+        this.category = category;
+        this.expenses = expenses;
+        this.spendingTime = spendingTime;
+        this.memo = memo;
+        this.excludeTotalExpenses = excludeTotalExpenses;
+    }
 }
