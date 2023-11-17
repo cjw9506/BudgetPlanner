@@ -1,11 +1,9 @@
 package com.budgetplanner.BudgetPlanner.expense.service;
 
+import com.budgetplanner.BudgetPlanner.budget.entity.Category;
 import com.budgetplanner.BudgetPlanner.common.exception.CustomException;
 import com.budgetplanner.BudgetPlanner.common.exception.ErrorCode;
-import com.budgetplanner.BudgetPlanner.expense.dto.CreateExpenseRequest;
-import com.budgetplanner.BudgetPlanner.expense.dto.GetExpenseResponse;
-import com.budgetplanner.BudgetPlanner.expense.dto.GetExpensesResponse;
-import com.budgetplanner.BudgetPlanner.expense.dto.UpdateExpenseRequest;
+import com.budgetplanner.BudgetPlanner.expense.dto.*;
 import com.budgetplanner.BudgetPlanner.expense.entity.Expense;
 import com.budgetplanner.BudgetPlanner.expense.repository.ExpenseRepository;
 import com.budgetplanner.BudgetPlanner.user.entity.User;
@@ -15,7 +13,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -69,15 +69,45 @@ public class ExpenseService {
         }
     }
 
-    public List<GetExpensesResponse> getExpenses(Authentication authentication) {
-
+    public ResultExpensesResponse getExpenses(Authentication authentication, ParamsRequest request) {
         User user = userRepository.findByAccount(authentication.getName())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        return expenseRepository.findByUser(user).stream()
+        LocalDateTime startTime = request.start().atStartOfDay();
+        LocalDateTime endTime = request.end().atTime(23, 59, 59);
+
+        List<GetExpensesResponse> expenses = expenseRepository.findBySpendingTimeBetweenAndUser(startTime, endTime, user)
+                .stream()
                 .map(GetExpensesResponse::new)
+                .filter(expense -> isCategoryMatch(request, expense) && isAmountInRange(request, expense))
                 .collect(Collectors.toList());
+
+        long totalExpenses = expenses.stream()
+                .filter(expense -> !expense.isExcludeTotalExpenses())
+                .mapToLong(GetExpensesResponse::getExpenses)
+                .sum();
+
+        Map<Category, Long> categoryExpenses = expenses.stream()
+                .collect(Collectors.groupingBy(GetExpensesResponse::getCategory,
+                        Collectors.summingLong(GetExpensesResponse::getExpenses)));
+
+        return ResultExpensesResponse.builder()
+                .totalExpenses(totalExpenses)
+                .categoryExpenses(categoryExpenses)
+                .expenses(expenses)
+                .build();
     }
+
+    private boolean isCategoryMatch(ParamsRequest request, GetExpensesResponse expense) {
+        return request.category() == null || expense.getCategory() == request.category();
+    }
+
+    private boolean isAmountInRange(ParamsRequest request, GetExpensesResponse expense) {
+        boolean minCondition = request.min() == null || expense.getExpenses() >= request.min();
+        boolean maxCondition = request.max() == null || expense.getExpenses() <= request.max();
+        return minCondition && maxCondition;
+    }
+
 
     @Transactional
     public void update(Long id, Authentication authentication, UpdateExpenseRequest request) {
