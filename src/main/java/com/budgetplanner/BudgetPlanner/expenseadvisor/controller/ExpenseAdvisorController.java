@@ -1,5 +1,6 @@
 package com.budgetplanner.BudgetPlanner.expenseadvisor.controller;
 
+import com.budgetplanner.BudgetPlanner.expenseadvisor.dto.BudgetGuideResponse;
 import com.budgetplanner.BudgetPlanner.expenseadvisor.dto.BudgetRecommendationResponse;
 import com.budgetplanner.BudgetPlanner.expenseadvisor.service.ExpenseAdvisorService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,14 @@ public class ExpenseAdvisorController {
     public ResponseEntity<?> recommend(Authentication authentication) {
 
         BudgetRecommendationResponse response = expenseAdvisorService.getRecommendation(authentication);
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @GetMapping("/guide")
+    public ResponseEntity<?> guide(Authentication authentication) {
+
+        BudgetGuideResponse response = expenseAdvisorService.getGuide(authentication);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
