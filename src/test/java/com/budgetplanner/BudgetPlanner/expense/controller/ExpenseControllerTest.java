@@ -4,10 +4,7 @@ import com.budgetplanner.BudgetPlanner.auth.controller.AuthController;
 import com.budgetplanner.BudgetPlanner.auth.filter.JwtAuthenticationFilter;
 import com.budgetplanner.BudgetPlanner.auth.jwt.JwtUtils;
 import com.budgetplanner.BudgetPlanner.budget.entity.Category;
-import com.budgetplanner.BudgetPlanner.expense.dto.CreateExpenseRequest;
-import com.budgetplanner.BudgetPlanner.expense.dto.GetExpenseResponse;
-import com.budgetplanner.BudgetPlanner.expense.dto.GetExpensesResponse;
-import com.budgetplanner.BudgetPlanner.expense.dto.UpdateExpenseRequest;
+import com.budgetplanner.BudgetPlanner.expense.dto.*;
 import com.budgetplanner.BudgetPlanner.expense.entity.Expense;
 import com.budgetplanner.BudgetPlanner.expense.service.ExpenseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -78,37 +76,42 @@ class ExpenseControllerTest {
                 .andExpect(status().isCreated());
     }
 
-//    @DisplayName("지출 전체 조회")
-//    @WithMockUser
-//    @Test
-//    void getExpenses() throws Exception {
-//        //todo 전체 조회 수정해야함!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//        GetExpensesResponse expense1 = GetExpensesResponse.builder()
-//                .id(1L)
-//                .category(Category.HOUSING_EXPENSES)
-//                .expenses(100000L)
-//                .memo("저녁 값")
-//                .spendingTime(LocalDateTime.parse("2023-11-21 10:30", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))
-//                .excludeTotalExpenses(false)
-//                .build();
-//
-//        GetExpensesResponse expense2 = GetExpensesResponse.builder()
-//                .id(2L)
-//                .category(Category.HOUSING_EXPENSES)
-//                .expenses(200000L)
-//                .memo("점심 값")
-//                .spendingTime(LocalDateTime.parse("2023-11-21 11:30", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))
-//                .excludeTotalExpenses(false)
-//                .build();
-//
-//        List<GetExpensesResponse> response = Stream.of(expense1, expense2).collect(Collectors.toList());
-//
-//        when(expenseService.getExpenses(any())).thenReturn(response);
-//
-//        mockMvc.perform(get("/api/expense").with(csrf()))
-//                .andDo(print())
-//                .andExpect(status().isOk());
-//    }
+    @DisplayName("지출 전체 조회")
+    @WithMockUser
+    @Test
+    void getExpenses() throws Exception {
+
+        long totalExpenses = 100000;
+
+        GetExpensesResponse response = GetExpensesResponse.builder()
+                .id(1L)
+                .category(Category.HOUSING_EXPENSES)
+                .expenses(100000L)
+                .memo("저녁 값")
+                .spendingTime(LocalDateTime.parse("2023-11-21 10:30", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))
+                .excludeTotalExpenses(false)
+                .build();
+
+        List<GetExpensesResponse> expenses = List.of(response);
+
+        Map<Category, Long> categoryExpenses = expenses.stream()
+                .collect(Collectors.groupingBy(GetExpensesResponse::getCategory,
+                        Collectors.summingLong(GetExpensesResponse::getExpenses)));
+
+        ResultExpensesResponse result = ResultExpensesResponse.builder()
+                .totalExpenses(totalExpenses)
+                .expenses(expenses)
+                .categoryExpenses(categoryExpenses)
+                .build();
+
+        when(expenseService.getExpenses(any(), any())).thenReturn(result);
+
+        mockMvc.perform(get("/api/expense?start=2023-01-01&end=2023-11-16").with(csrf()))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+
 
     @DisplayName("지출 단건 조회")
     @WithMockUser
