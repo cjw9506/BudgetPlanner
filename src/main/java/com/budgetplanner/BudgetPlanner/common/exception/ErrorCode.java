@@ -19,6 +19,7 @@ public enum ErrorCode {
 
     //budget
     CATEGORY_MISSING(HttpStatus.BAD_REQUEST, "B001", "카테고리에 대한 예산을 모두 입력해주세요."),
+    BUDGET_NOT_FOUND(HttpStatus.NOT_FOUND, "B002", "설정된 예산이 없습니다."),
 
     //expense
     EXPENSE_NOT_FOUND(HttpStatus.NOT_FOUND, "E001", "해당 지출을 찾을 수 없습니다."),
