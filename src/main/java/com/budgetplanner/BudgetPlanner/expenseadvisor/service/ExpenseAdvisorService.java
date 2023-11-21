@@ -37,35 +37,25 @@ public class ExpenseAdvisorService {
     //todo 코트 리팩토링 --> 필수
     //todo 밑에 guide 오늘 카테고리별 사용 금액 double -> integer, risk %붙여서 스트링으로 바꾸기!!!
 
+    /*
+     * 오늘 지출 추천
+     * */
     public BudgetRecommendationResponse getRecommendation(Authentication authentication) {
 
-        User user = userRepository.findByAccount(authentication.getName())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        User user = getUser(authentication);
+        List<Budget> budgets = getBudgetsForUser(user);
 
-        List<Budget> budgets = budgetRepository.findByUser(user);
+        int remainingDays = calculateRemainingDays(); //남은 일수 계산
+        long budget = getBudgets(budgets); //유저의 설정된 예산
+        long spentAmount = amountUsedThisMonth(user); //유저가 이제까지 쓴 금액
+        int dailyAmount = calculateDailyAmount(remainingDays, budget, spentAmount); //오늘 지출 가능한 금액
 
-        //남은 일수 계산
-        int remainingDays = calculateRemainingDays();
+        comment = (dailyAmount < DAILY_MIN_BUDGET) ?
+                "이번 달 소비가 많습니다. 오늘은 절약하시는 것을 추천드립니다! 화이팅!" :
+                "이번 달 소비 계획이 잘 지켜지고 있습니다!";
 
-        //유저의 설정된 예산
-        long budget = getBudgets(budgets);
-
-        //유저가 이제까지 쓴 금액
-        long spentAmount = amountUsedThisMonth(user);
-
-        //오늘 지출 가능한 금액
-        int dailyAmount = (int)Math.floor((double)(budget - spentAmount) / remainingDays / 100) * 100;
-
-        if (dailyAmount < DAILY_MIN_BUDGET) {
-            dailyAmount = DAILY_MIN_BUDGET;
-            comment = "이번 달 소비가 많습니다. 오늘은 절약하시는 것을 추천드립니다! 화이팅!";
-        } else {
-            comment = "이번 달 소비 계획이 잘 지켜지고 있습니다!";
-        }
-
-        //유저 예산 비율 구하기
-        Map<Category, Double> categoryRatios = calculateCategoryRatios(budgets, budget);
-
+        //유저 카테고리별 예산 비율 구하기
+        Map<Category, Double> categoryRatios = calculateCategoryRatios(budgets, budget); //유저 예산 비율 구하기
         //카테고리별 사용 가능한 유저 예산
         Map<Category, Integer> categoryBudgets = getCategoryBudgets(budgets, dailyAmount, categoryRatios);
 
@@ -76,8 +66,80 @@ public class ExpenseAdvisorService {
                 .build();
 
     }
+    /*
+    * 오늘 지출 안내
+    * */
+    public BudgetGuideResponse getGuide(Authentication authentication) {
 
-    private Map<Category, Integer> getCategoryBudgets(List<Budget> budgets, int dailyAmount, Map<Category, Double> categoryRatios) {
+        User user = getUser(authentication);
+        List<Expense> expenses = getExpensesToday(user);
+        int todaySpentAmount = calculateTodaySpentAmount(expenses); //오늘 지출한 총액
+        Map<Category, Integer> todayCategorySpent = calculateTodayCategorySpent(expenses); //오늘 카테고리 별 사용한 금액
+
+        List<Budget> budgets = getBudgetsForUser(user);
+        int remainingDays = calculateRemainingDays(); //남은 일수 계산
+        long budget = getBudgets(budgets); //유저의 설정된 예산
+        long spentAmount = amountUsedThisMonth(user); //유저가 이제까지 쓴 금액
+        int dailyAmount = calculateDailyAmount(remainingDays, budget, spentAmount); //오늘 지출 가능한 금액
+
+        //유저 카테고리별 예산 비율 구하기
+        Map<Category, Double> categoryRatios = calculateCategoryRatios(budgets, budget);
+        //카테고리별 사용 가능한 유저 예산
+        Map<Category, Integer> categoryBudgets = getCategoryBudgets(budgets, dailyAmount, categoryRatios);
+        //오늘 카테고리 별 위험도
+        Map<Category, String> riskByCategory = riskByCategory(todayCategorySpent, categoryBudgets);
+
+        return BudgetGuideResponse.builder()
+                .todaySpentAmount(todaySpentAmount)
+                .todayCategorySpent(todayCategorySpent)
+                .categoryBudgets(categoryBudgets)
+                .risk(riskByCategory)
+                .build();
+
+
+    }
+
+    public List<Budget> getBudgetsForUser(User user) {
+        return budgetRepository.findByUser(user);
+    }
+
+    public Map<Category, Integer> calculateTodayCategorySpent(List<Expense> expenses) {
+        Map<Category, Long> todayCategorySpent = expenses.stream()
+                .collect(Collectors.groupingBy(
+                        Expense::getCategory,
+                        Collectors.summingLong(Expense::getExpenses)
+                ));
+
+        Map<Category, Integer> todayCategorySpentAsInteger = todayCategorySpent.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().intValue()
+                ));
+
+        return todayCategorySpentAsInteger;
+    }
+
+
+    public int calculateTodaySpentAmount(List<Expense> expenses) {
+        int todaySpentAmount = (int) expenses.stream()
+                .filter(expense -> !expense.isExcludeTotalExpenses())
+                .mapToLong(Expense::getExpenses)
+                .sum();
+        return todaySpentAmount;
+    }
+
+    public List<Expense> getExpensesToday(User user) {
+        List<Expense> expenses = expenseRepository.findBySpendingTimeBetweenAndUser(
+                LocalDateTime.now().with(LocalTime.MIN), LocalDateTime.now().with(LocalTime.MAX), user);
+        return expenses;
+    }
+
+    private User getUser(Authentication authentication) {
+        return userRepository.findByAccount(authentication.getName())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    public Map<Category, Integer> getCategoryBudgets(List<Budget> budgets, int dailyAmount, Map<Category, Double> categoryRatios) {
         return budgets.stream()
                 .collect(Collectors.toMap(
                         Budget::getCategory,
@@ -85,7 +147,7 @@ public class ExpenseAdvisorService {
                 ));
     }
 
-    private Map<Category, Double> calculateCategoryRatios(List<Budget> budgets, long budget) {
+    public Map<Category, Double> calculateCategoryRatios(List<Budget> budgets, long budget) {
         Map<Category, Double> categoryRatios = budgets.stream()
                 .collect(Collectors.toMap(
                         Budget::getCategory,
@@ -94,14 +156,14 @@ public class ExpenseAdvisorService {
         return categoryRatios;
     }
 
-    private long getBudgets(List<Budget> budgets) {
+    public long getBudgets(List<Budget> budgets) {
         long budget = budgets.stream()
                 .mapToLong(Budget::getBudget)
                 .sum();
         return budget;
     }
 
-    private long amountUsedThisMonth(User user) {
+    public long amountUsedThisMonth(User user) {
         LocalDateTime startOfMonth = LocalDateTime.of(LocalDate.now().withDayOfMonth(1), LocalTime.MIN);
         LocalDateTime yesterday = LocalDateTime.now().minusDays(1).with(LocalTime.MAX);
 
@@ -113,7 +175,7 @@ public class ExpenseAdvisorService {
         return spentAmount;
     }
 
-    private int calculateRemainingDays() {
+    public int calculateRemainingDays() {
         LocalDate today = LocalDate.now();
         LocalDate lastDayOfMonth = today.withDayOfMonth(today.lengthOfMonth());
 
@@ -122,73 +184,31 @@ public class ExpenseAdvisorService {
         return (int) remainingDays;
     }
 
-    public BudgetGuideResponse getGuide(Authentication authentication) {
+    public int calculateDailyAmount(int remainingDays, long budget, long spentAmount) {
+        return (int) Math.floor((double) (budget - spentAmount) / remainingDays / 100) * 100;
+    }
 
-        User user = userRepository.findByAccount(authentication.getName())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
-        List<Expense> expenses = expenseRepository.findBySpendingTimeBetweenAndUser(
-                LocalDateTime.now().with(LocalTime.MIN), LocalDateTime.now().with(LocalTime.MAX), user);
-
-        //오늘 지출한 총액
-        int todaySpentAmount = (int) expenses.stream()
-                .filter(expense -> !expense.isExcludeTotalExpenses())
-                .mapToLong(Expense::getExpenses)
-                .sum();
-
-        //오늘 카테고리 별 사용한 금액
-        Map<Category, Double> todayCategorySpent = expenses.stream()
-                .collect(Collectors.groupingBy(
-                        Expense::getCategory,
-                        Collectors.summingDouble(Expense::getExpenses)
-                ));
-
-        //오늘 카테고리 별 사용가능한 금액
-        List<Budget> budgets = budgetRepository.findByUser(user);
-
-        //남은 일수 계산
-        int remainingDays = calculateRemainingDays();
-
-        //유저의 설정된 예산
-        long budget = getBudgets(budgets);
-
-        //유저가 이제까지 쓴 금액
-        long spentAmount = amountUsedThisMonth(user);
-
-        //오늘 지출 가능한 금액
-        int dailyAmount = (int)Math.floor((double)(budget - spentAmount) / remainingDays / 100) * 100;
-
-        //유저 예산 비율 구하기
-        Map<Category, Double> categoryRatios = calculateCategoryRatios(budgets, budget);
-
-        //카테고리별 사용 가능한 유저 예산
-        Map<Category, Integer> categoryBudgets = getCategoryBudgets(budgets, dailyAmount, categoryRatios);
-
-        //오늘 카테고리 별 위험도
-        Map<Category, Integer> riskByCategory = todayCategorySpent.entrySet().stream()
+    public Map<Category, String> riskByCategory(Map<Category, Integer> todayCategorySpent, Map<Category, Integer> categoryBudgets) {
+        Map<Category, String> riskByCategory = todayCategorySpent.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> {
-                            double spent = entry.getValue();
+                            int spent = entry.getValue();
                             int todayBudget = categoryBudgets.getOrDefault(entry.getKey(), 0);
 
                             if (todayBudget == 0) {
                                 // 예산이 0이면 위험도를 정의할 수 없음
-                                return 0;
+                                return "0%";
                             }
 
                             // 위험도 계산
-                            return Math.round((float) spent / todayBudget * 100);
+                            int riskPercentage = Math.round((float) spent / todayBudget * 100);
+                            return riskPercentage + "%";
                         }
                 ));
-
-        return BudgetGuideResponse.builder()
-                .todaySpentAmount(todaySpentAmount)
-                .todayCategorySpent(todayCategorySpent)
-                .categoryBudgets(categoryBudgets)
-                .risk(riskByCategory)
-                .build();
-
-
+        return riskByCategory;
     }
+
+
+
 }
