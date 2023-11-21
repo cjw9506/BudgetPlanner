@@ -19,9 +19,12 @@ public class User {
 
     private String password;
 
+    private String webhookUrl;
+
     @Builder
-    public User(String account, String password) {
+    public User(String account, String password, String webhookUrl) {
         this.account = account;
         this.password = password;
+        this.webhookUrl = webhookUrl;
     }
 }
