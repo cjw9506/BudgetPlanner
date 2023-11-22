@@ -1,10 +1,10 @@
 package com.budgetplanner.BudgetPlanner.budget.repository;
 
 import com.budgetplanner.BudgetPlanner.budget.entity.Budget;
-import com.budgetplanner.BudgetPlanner.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.YearMonth;
 import java.util.List;
 
 public interface BudgetRepository extends JpaRepository<Budget, Long> {
@@ -12,5 +12,5 @@ public interface BudgetRepository extends JpaRepository<Budget, Long> {
     @Query("SELECT b.category, SUM(b.budget) FROM Budget b GROUP BY b.category")
     List<Object[]> findCategoryAndBudget();
 
-    List<Budget> findByUser(User user);
+    List<Budget> findAllByUserIdAndYearMonth(Long id, YearMonth date);
 }

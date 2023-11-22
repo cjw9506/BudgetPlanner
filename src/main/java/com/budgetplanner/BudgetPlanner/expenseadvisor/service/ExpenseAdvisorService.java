@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -43,8 +44,7 @@ public class ExpenseAdvisorService {
     public BudgetRecommendationResponse getRecommendation(Authentication authentication) {
 
         User user = getUser(authentication);
-        List<Budget> budgets = getBudgetsForUser(user);
-
+        List<Budget> budgets = getBudgetsForUser(user.getId());
         int remainingDays = calculateRemainingDays(); //남은 일수 계산
         long budget = getBudgets(budgets); //유저의 설정된 예산
         long spentAmount = amountUsedThisMonth(user); //유저가 이제까지 쓴 금액
@@ -76,7 +76,7 @@ public class ExpenseAdvisorService {
         int todaySpentAmount = calculateTodaySpentAmount(expenses); //오늘 지출한 총액
         Map<Category, Integer> todayCategorySpent = calculateTodayCategorySpent(expenses); //오늘 카테고리 별 사용한 금액
 
-        List<Budget> budgets = getBudgetsForUser(user);
+        List<Budget> budgets = getBudgetsForUser(user.getId());
         int remainingDays = calculateRemainingDays(); //남은 일수 계산
         long budget = getBudgets(budgets); //유저의 설정된 예산
         long spentAmount = amountUsedThisMonth(user); //유저가 이제까지 쓴 금액
@@ -99,8 +99,8 @@ public class ExpenseAdvisorService {
 
     }
 
-    public List<Budget> getBudgetsForUser(User user) {
-        return budgetRepository.findByUser(user);
+    public List<Budget> getBudgetsForUser(Long userId) {
+        return budgetRepository.findAllByUserIdAndYearMonth(userId, YearMonth.now());
     }
 
     public Map<Category, Integer> calculateTodayCategorySpent(List<Expense> expenses) {
