@@ -22,6 +22,7 @@ public class Expense {
 
     private Long expenses;
 
+    @Enumerated(EnumType.STRING)
     private Category category;
 
     private String memo;

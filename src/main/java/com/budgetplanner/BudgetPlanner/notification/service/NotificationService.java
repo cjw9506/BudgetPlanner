@@ -32,7 +32,7 @@ public class NotificationService {
         List<User> users = userRepository.findAll();
 
         for (User user : users) {
-            List<Budget> budgets = expenseAdvisorService.getBudgetsForUser(user);
+            List<Budget> budgets = expenseAdvisorService.getBudgetsForUser(user.getId());
 
             int remainingDays = expenseAdvisorService.calculateRemainingDays();
             long budget = expenseAdvisorService.getBudgets(budgets);
@@ -58,7 +58,7 @@ public class NotificationService {
             int todaySpentAmount = expenseAdvisorService.calculateTodaySpentAmount(expenses);
             Map<Category, Integer> todayCategorySpent = expenseAdvisorService.calculateTodayCategorySpent(expenses);
 
-            List<Budget> budgets = expenseAdvisorService.getBudgetsForUser(user);
+            List<Budget> budgets = expenseAdvisorService.getBudgetsForUser(user.getId());
             int remainingDays = expenseAdvisorService.calculateRemainingDays();
             long budget = expenseAdvisorService.getBudgets(budgets);
             long spentAmount = expenseAdvisorService.amountUsedThisMonth(user);
