@@ -33,6 +33,7 @@ public class AuthService {
         User user = User.builder()
                 .account(request.getAccount())
                 .password(encodedPassword)
+                .webhookUrl(request.getWebhookUrl())
                 .build();
 
         userRepository.save(user);

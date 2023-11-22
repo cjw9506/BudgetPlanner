@@ -19,9 +19,12 @@ public class UserSignupRequest {
     @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-zA-Z!@#$%^&*()-_=+]).+$", message = "비밀번호는 숫자, 문자, 특수문자 중 2가지 이상을 포함해야 합니다.")
     private String password;
 
+    private String webhookUrl;
+
     @Builder
-    public UserSignupRequest(String account, String password) {
+    public UserSignupRequest(String account, String password, String webhookUrl) {
         this.account = account;
         this.password = password;
+        this.webhookUrl = webhookUrl;
     }
 }
