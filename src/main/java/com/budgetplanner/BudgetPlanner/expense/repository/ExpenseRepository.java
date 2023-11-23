@@ -10,5 +10,6 @@ import java.util.List;
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
     List<Expense> findBySpendingTimeBetweenAndUser(LocalDateTime startTime, LocalDateTime endTime, User user);
-}
 
+    List<Expense> findBySpendingTimeBetween(LocalDateTime startTime, LocalDateTime endTime);
+}
