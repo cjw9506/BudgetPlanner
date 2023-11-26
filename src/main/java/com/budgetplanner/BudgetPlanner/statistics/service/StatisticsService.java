@@ -181,6 +181,6 @@ public class StatisticsService {
                         .build();
 
         }
-        throw new IllegalArgumentException(); //todo 추후 변경
+        throw new CustomException(ErrorCode.DATA_MIS_MATCH);
     }
 }
