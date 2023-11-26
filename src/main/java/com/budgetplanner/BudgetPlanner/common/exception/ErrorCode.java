@@ -23,7 +23,11 @@ public enum ErrorCode {
 
     //expense
     EXPENSE_NOT_FOUND(HttpStatus.NOT_FOUND, "E001", "해당 지출을 찾을 수 없습니다."),
-    EXPENSE_USER_MISMATCH(HttpStatus.BAD_REQUEST, "E002", "기록한 유저와 찾을 유저가 일치하지 않습니다.")
+    EXPENSE_USER_MISMATCH(HttpStatus.BAD_REQUEST, "E002", "기록한 유저와 찾을 유저가 일치하지 않습니다."),
+
+    //statistics
+    DATA_MIS_MATCH(HttpStatus.BAD_REQUEST, "S001", "해당 데이터는 없는 케이스입니다." +
+            "")
     ;
 
     private final HttpStatus httpStatus;
