@@ -31,6 +31,9 @@ public class SecurityConfig {
                         .requestMatchers(POST, "/api/signup").permitAll()
                         .requestMatchers(POST, "/api/login").permitAll()
                         .requestMatchers(POST, "/api/refresh").permitAll()
+                        .requestMatchers(GET,"/swagger*/**").permitAll()
+                        .requestMatchers(GET,"/api-docs/**").permitAll()
+
                         .anyRequest().authenticated()
                 )
 
