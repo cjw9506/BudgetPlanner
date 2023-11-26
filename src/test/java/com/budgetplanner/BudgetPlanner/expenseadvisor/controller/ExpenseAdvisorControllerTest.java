@@ -5,6 +5,7 @@ import com.budgetplanner.BudgetPlanner.auth.jwt.JwtUtils;
 import com.budgetplanner.BudgetPlanner.budget.entity.Category;
 import com.budgetplanner.BudgetPlanner.expense.controller.ExpenseController;
 import com.budgetplanner.BudgetPlanner.expense.dto.CreateExpenseRequest;
+import com.budgetplanner.BudgetPlanner.expenseadvisor.dto.BudgetGuideResponse;
 import com.budgetplanner.BudgetPlanner.expenseadvisor.dto.BudgetRecommendationResponse;
 import com.budgetplanner.BudgetPlanner.expenseadvisor.service.ExpenseAdvisorService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -73,6 +74,54 @@ class ExpenseAdvisorControllerTest {
         when(expenseAdvisorService.getRecommendation(any())).thenReturn(response);
 
         mockMvc.perform(get("/api/expense-advisor/recommend").with(csrf())
+                        .contentType(APPLICATION_JSON)
+                        .content(json))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    @DisplayName("오늘 지출 안내")
+    @WithMockUser
+    @Test
+    void createExpenseGuide() throws Exception {
+
+        Map<Category, Integer> categoryBudgets = new HashMap<>();
+
+        categoryBudgets.put(Category.FOOD_EXPENSES, 100000);
+        categoryBudgets.put(Category.HOUSING_EXPENSES, 100000);
+        categoryBudgets.put(Category.TRANSPORTATION_EXPENSES, 100000);
+        categoryBudgets.put(Category.SAVING_EXPENSES, 100000);
+        categoryBudgets.put(Category.ETC_EXPENSES, 100000);
+
+        Map<Category, Integer> todayCategoryAmount = new HashMap<>();
+
+        todayCategoryAmount.put(Category.FOOD_EXPENSES, 10000);
+        todayCategoryAmount.put(Category.HOUSING_EXPENSES, 10000);
+        todayCategoryAmount.put(Category.TRANSPORTATION_EXPENSES, 10000);
+        todayCategoryAmount.put(Category.SAVING_EXPENSES, 10000);
+        todayCategoryAmount.put(Category.ETC_EXPENSES, 10000);
+
+        Map<Category, String> risk = new HashMap<>();
+
+        risk.put(Category.FOOD_EXPENSES, "10%");
+        risk.put(Category.HOUSING_EXPENSES, "10%");
+        risk.put(Category.TRANSPORTATION_EXPENSES, "10%");
+        risk.put(Category.SAVING_EXPENSES, "10%");
+        risk.put(Category.ETC_EXPENSES, "10%");
+
+
+        BudgetGuideResponse response = BudgetGuideResponse.builder()
+                .todaySpentAmount(100000)
+                .todayCategorySpent(todayCategoryAmount)
+                .categoryBudgets(categoryBudgets)
+                .risk(risk)
+                .build();
+
+        String json = objectMapper.writeValueAsString(response);
+
+        when(expenseAdvisorService.getGuide(any())).thenReturn(response);
+
+        mockMvc.perform(get("/api/expense-advisor/guide").with(csrf())
                         .contentType(APPLICATION_JSON)
                         .content(json))
                 .andDo(print())
