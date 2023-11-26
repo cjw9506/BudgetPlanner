@@ -136,6 +136,8 @@ BudgetPlanner는 사용자의 예산과 지출 관리에 대한 추천 및 관�
 <details>
   <summary>자세히</summary>
 
-추후 업데이트 예정(swagger)
+URL : `http://server:port/swagger-ui/index.html`
+
+<img width="800" alt="스크린샷 2023-11-26 오후 9 33 32" src="https://github.com/cjw9506/BudgetPlanner/assets/63503519/28793e15-ce25-45a6-be06-3b6140f90b25">
   
 </details>
