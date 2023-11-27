@@ -13,6 +13,8 @@
 <img src="https://img.shields.io/badge/MySQL 8-4479A1?style=for-the-badge&logo=MySQL&logoColor=white"/></a>
 <img src="https://img.shields.io/badge/Discord-7289DA?style=for-the-badge&logo=discord&logoColor=white"/></a>
 <img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white"/></a>
+<img src="https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens"/></a>
+<img src="https://img.shields.io/badge/swagger-%ffffff.svg?style=for-the-badge&logo=swagger&logoColor=white"/></a>
 </div>
 
 <br>
@@ -35,8 +37,6 @@ BudgetPlanner는 사용자의 예산과 지출 관리에 대한 추천 및 관�
 2023.11.09 ~ 2023.11.22 (14 days)
 
 ## 2.프로젝트 요구사항
-<details>
-    <summary>자세히</summary>
 
 - 사용자 (유저) 모듈
   - 회원가입 및 로그인 기능 구현.
@@ -56,7 +56,7 @@ BudgetPlanner는 사용자의 예산과 지출 관리에 대한 추천 및 관�
 - 지출 컨설팅 (Consulting) 모듈
   - 오늘 지출 추천 및 안내 기능 구현.
   - 사용자 상황에 맞는 멘트 제공.
-  - 알림 기능 선택 구현.
+  - 알림 기능 Discord Webhook 구현.
 
 - 지출 통계 (Statistics) 모듈
   - Dummy 데이터 생성 기능 구현.
@@ -64,7 +64,6 @@ BudgetPlanner는 사용자의 예산과 지출 관리에 대한 추천 및 관�
     - 지난 달 대비 총액 및 카테고리 별 소비율 계산.
     - 지난 요일 대비 소비율 계산.
     - 다른 유저 대비 소비율 계산.
-</details>
 
 ## 3. 프로젝트 구조
 
@@ -116,28 +115,16 @@ BudgetPlanner는 사용자의 예산과 지출 관리에 대한 추천 및 관�
 
 ## 4. ERD
 
-<details>
-    <summary>자세히</summary>
   <img width="662" alt="스크린샷 2023-11-24 오후 5 43 24" src="https://github.com/cjw9506/BudgetPlanner/assets/63503519/9f699418-b02f-4f37-94a1-b1105499229c">
-
-</details>
 
 ## 5. 동작예시
 
-<details>
-    <summary>자세히</summary>
-
   <img width="407" alt="스크린샷 2023-11-22 오전 1 30 57" src="https://github.com/cjw9506/BudgetPlanner/assets/63503519/efe0c1b0-f60c-4272-b7f8-2881c0febc13">
   
-</details>
 
 ## 6. API 문서
-
-<details>
-  <summary>자세히</summary>
 
 URL : `http://server:port/swagger-ui/index.html`
 
 <img width="800" alt="스크린샷 2023-11-26 오후 9 33 32" src="https://github.com/cjw9506/BudgetPlanner/assets/63503519/28793e15-ce25-45a6-be06-3b6140f90b25">
-  
-</details>
+
