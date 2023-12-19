@@ -141,39 +141,34 @@ public class StatisticsService {
 
             case "other-user":
 
-                /*
-                현재 - 모든 유저 가져오기 + 나의 정보 가져오기
-                개선 - 모든 유저 가져오기(내꺼 필터링하기)
-                 */
-                //다른 유저들의 이번달 지출 가져와서 평균내기
-                //이번달 1일
-                LocalDateTime start = LocalDateTime.now()
-                        .with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN);
-                //현재
-                LocalDateTime end = LocalDateTime.now();
+                //모든 유저의 지출
+                List<Expense> usersExpenses = expenseRepository.findBySpendingTimeBetween(firstDayOfMonth, now);
 
-                List<Expense> findUser = expenseRepository.findBySpendingTimeBetweenAndUser(start, end, user);
+                //자신의 지출
+                List<Expense> userExpense = usersExpenses.stream()
+                        .filter(expense -> expense.getUser().equals(user))
+                        .collect(Collectors.toList());
 
-                Long findUserTotalSpent = findUser.stream()
+                //자신의 총 지출
+                Long ownTotalSpent = userExpense.stream()
                         .filter(expense -> !expense.isExcludeTotalExpenses())
                         .collect(Collectors.summingLong(Expense::getExpenses));
 
-                List<Expense> users = expenseRepository.findBySpendingTimeBetween(start, end);
-
-                Map<User, Long> usersExpenses = users.stream()
+                //자신 제외 모든 유저지출
+                Map<User, Long> otherUsersExpenses = usersExpenses.stream()
+                        .filter(expense -> !expense.getUser().equals(user))
                         .collect(Collectors.groupingBy(
                                 Expense::getUser,
                                 Collectors.summingLong(Expense::getExpenses)
                         ));
 
                 Long totalSpent = 0L;
-                for (Long value : usersExpenses.values()) {
+                for (Long value : otherUsersExpenses.values()) {
                     totalSpent += value;
                 }
 
-                double average = ((double) totalSpent / usersExpenses.size());
-
-                int compareAverage = (int)((double) findUserTotalSpent / average * 100);
+                double average = ((double) totalSpent / otherUsersExpenses.size());
+                int compareAverage = (int)((double) ownTotalSpent / average * 100);
 
                 return StatisticsResponse.builder()
                         .compareTotalPercent(compareAverage)
