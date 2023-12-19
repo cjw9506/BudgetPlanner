@@ -35,9 +35,6 @@ public class ExpenseAdvisorService {
     private static final int DAILY_MIN_BUDGET = 10000;
     private static String comment = "";
 
-    //todo 코트 리팩토링 --> 필수
-    //todo 밑에 guide 오늘 카테고리별 사용 금액 double -> integer, risk %붙여서 스트링으로 바꾸기!!!
-
     /*
      * 오늘 지출 추천
      * */
@@ -47,7 +44,8 @@ public class ExpenseAdvisorService {
         List<Budget> budgets = getBudgetsForUser(user.getId());
         int remainingDays = calculateRemainingDays(); //남은 일수 계산
         long budget = getBudgets(budgets); //유저의 설정된 예산
-        long spentAmount = amountUsedThisMonth(user); //유저가 이제까지 쓴 금액
+        List<Expense> expenses = expensesThisMonth(user); //유저가 이제까지 쓴 금액
+        long spentAmount = amountUsedThisMonth(expenses); //이번달 총 지출
         int dailyAmount = calculateDailyAmount(remainingDays, budget, spentAmount); //오늘 지출 가능한 금액
 
         comment = (dailyAmount < DAILY_MIN_BUDGET) ?
@@ -72,14 +70,17 @@ public class ExpenseAdvisorService {
     public BudgetGuideResponse getGuide(Authentication authentication) {
 
         User user = getUser(authentication);
-        List<Expense> expenses = getExpensesToday(user);
-        int todaySpentAmount = calculateTodaySpentAmount(expenses); //오늘 지출한 총액
-        Map<Category, Integer> todayCategorySpent = calculateTodayCategorySpent(expenses); //오늘 카테고리 별 사용한 금액
+
+        List<Expense> expensesThisMonth = expensesThisMonth(user); //이번달 지출
+        List<Expense> expensesToday = getExpensesToday(expensesThisMonth); //오늘 지출
+
+        int todaySpentAmount = calculateTodaySpentAmount(expensesToday); //오늘 지출한 총액
+        Map<Category, Integer> todayCategorySpent = calculateTodayCategorySpent(expensesToday); //오늘 카테고리 별 사용한 금액
 
         List<Budget> budgets = getBudgetsForUser(user.getId());
         int remainingDays = calculateRemainingDays(); //남은 일수 계산
         long budget = getBudgets(budgets); //유저의 설정된 예산
-        long spentAmount = amountUsedThisMonth(user); //유저가 이제까지 쓴 금액
+        long spentAmount = amountUsedThisMonth(expensesThisMonth); //이번달 총 지출
         int dailyAmount = calculateDailyAmount(remainingDays, budget, spentAmount); //오늘 지출 가능한 금액
 
         //유저 카테고리별 예산 비율 구하기
@@ -95,8 +96,14 @@ public class ExpenseAdvisorService {
                 .categoryBudgets(categoryBudgets)
                 .risk(riskByCategory)
                 .build();
+    }
 
-
+    public List<Expense> getExpensesToday(List<Expense> expensesThisMonth) {
+        return expensesThisMonth.stream()
+                .filter(expense ->
+                        !expense.getSpendingTime().isBefore(LocalDateTime.now().with(LocalTime.MIN)) &&
+                                !expense.getSpendingTime().isAfter(LocalDateTime.now().with(LocalTime.MAX)))
+                .collect(Collectors.toList());
     }
 
     public List<Budget> getBudgetsForUser(Long userId) {
@@ -128,12 +135,6 @@ public class ExpenseAdvisorService {
         return todaySpentAmount;
     }
 
-    public List<Expense> getExpensesToday(User user) {
-        List<Expense> expenses = expenseRepository.findBySpendingTimeBetweenAndUser(
-                LocalDateTime.now().with(LocalTime.MIN), LocalDateTime.now().with(LocalTime.MAX), user);
-        return expenses;
-    }
-
     private User getUser(Authentication authentication) {
         return userRepository.findByAccount(authentication.getName())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -163,16 +164,19 @@ public class ExpenseAdvisorService {
         return budget;
     }
 
-    public long amountUsedThisMonth(User user) {
+    public List<Expense> expensesThisMonth(User user) {
         LocalDateTime startOfMonth = LocalDateTime.of(LocalDate.now().withDayOfMonth(1), LocalTime.MIN);
         LocalDateTime yesterday = LocalDateTime.now().minusDays(1).with(LocalTime.MAX);
 
+        List<Expense> expenses = expenseRepository.findBySpendingTimeBetweenAndUser(startOfMonth, yesterday, user);
+        return expenses;
+    }
 
-        long spentAmount = expenseRepository.findBySpendingTimeBetweenAndUser(startOfMonth, yesterday, user).stream()
+    public long amountUsedThisMonth(List<Expense> expenses) {
+        return expenses.stream()
                 .filter(expense -> !expense.isExcludeTotalExpenses())
                 .mapToLong(Expense::getExpenses)
                 .sum();
-        return spentAmount;
     }
 
     public int calculateRemainingDays() {
@@ -208,7 +212,5 @@ public class ExpenseAdvisorService {
                 ));
         return riskByCategory;
     }
-
-
 
 }
