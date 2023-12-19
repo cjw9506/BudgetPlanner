@@ -28,44 +28,45 @@ public class StatisticsService {
     private final ExpenseRepository expenseRepository;
     private final UserRepository userRepository;
 
-    //todo 이번달, 저번달 지출이 없을 시 처리해줘야함 + 리팩토링 필수(지저분, 일단 되게만)
     public StatisticsResponse getStatistics(String data, Authentication authentication) {
+
+        //저번달 1일
+        LocalDateTime firstDayOfLastMonth = LocalDateTime.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN);
+        //현재 날짜 - 1달
+        LocalDateTime aMonthAgo = LocalDateTime.now().minusMonths(1);
+        //이번달 1일
+        LocalDateTime firstDayOfMonth = LocalDateTime.now().with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN);
+        //현재
+        LocalDateTime now = LocalDateTime.now();
+        //저번달 1일
+        LocalDateTime aWeekAgoStart =LocalDateTime.now().minusDays(7).with(LocalTime.MIN);
+        //현재 날짜 - 7일
+        LocalDateTime aWeekAgoEnd = LocalDateTime.now().minusDays(7).with(LocalTime.MAX);
+        //오늘 자정
+        LocalDateTime todayStart = LocalDateTime.now().with(LocalTime.MIN);
 
         User user = userRepository.findByAccount(authentication.getName())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         switch (data) {
             case "last-month":
-                /*
-                * 지난달 지출 총액 가져오기
-                * */
-                //저번달 1일
-                LocalDateTime firstDayOfLastMonth = LocalDateTime.now().minusMonths(1)
-                        .with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN);
-                //현재 날짜 - 1달
-                LocalDateTime aMonthAgo = LocalDateTime.now().minusMonths(1);
 
-                List<Expense> lastMonthExpenses = expenseRepository.findBySpendingTimeBetweenAndUser(
-                        firstDayOfLastMonth, aMonthAgo, user);
+                List<Expense> fromLastMonthToTodayExpenses = expenseRepository.findBySpendingTimeBetweenAndUser(
+                        firstDayOfLastMonth, now, user);
 
                 //저번달 지출 총액
-                Integer lastMonthTotalSpent = (int) lastMonthExpenses.stream()
+                Integer lastMonthTotalSpent = (int) fromLastMonthToTodayExpenses.stream()
+                        .filter(expense -> !expense.getSpendingTime().isBefore(firstDayOfLastMonth) &&
+                                !expense.getSpendingTime().isAfter(aMonthAgo))
                         .filter(expense -> !expense.isExcludeTotalExpenses())
                         .mapToLong(Expense::getExpenses)
                         .sum();
-                /*
-                * 이번달 지출 총액 가져오기
-                * */
 
-                //이번달 1일
-                LocalDateTime firstDayOfMonth = LocalDateTime.now()
-                        .with(TemporalAdjusters.firstDayOfMonth()).with(LocalTime.MIN);
-
-                //현재
-                LocalDateTime now = LocalDateTime.now();
-
-                List<Expense> thisMonthExpenses = expenseRepository.findBySpendingTimeBetweenAndUser(
-                        firstDayOfMonth, now, user);
+                //이번달 지출
+                List<Expense> thisMonthExpenses = fromLastMonthToTodayExpenses.stream()
+                        .filter(expense -> !expense.getSpendingTime().isBefore(firstDayOfMonth) &&
+                                !expense.getSpendingTime().isAfter(now))
+                        .collect(Collectors.toList());
 
                 //이번달 지출 총액
                 Integer thisMonthTotalSpent = (int) thisMonthExpenses.stream()
@@ -77,7 +78,7 @@ public class StatisticsService {
                 int compareTotalPercent = (int) ((double) thisMonthTotalSpent / lastMonthTotalSpent * 100);
 
                 //지난달 카테고리 별 지출 총액 가져오기
-                Map<Category, Long> lastMonthCategoryTotalSpent = lastMonthExpenses.stream()
+                Map<Category, Long> lastMonthCategoryTotalSpent = fromLastMonthToTodayExpenses.stream()
                         .collect(Collectors.groupingBy(
                                 Expense::getCategory,
                                 LinkedHashMap::new, //순서보장
@@ -92,7 +93,7 @@ public class StatisticsService {
                                 Collectors.summingLong(Expense::getExpenses)
                         ));
 
-                //비교해서 퍼센티지
+                //비율
                 Map<Category, String> compareCategoryPercent = new HashMap<>();
 
                 lastMonthCategoryTotalSpent.forEach((category, lastMonthTotal) -> {
@@ -112,12 +113,8 @@ public class StatisticsService {
                         .build();
 
             case "last-week":
-                //-7일 전 하루 지출 총액가져오기
-                //저번달 1일
-                LocalDateTime aWeekAgoStart = LocalDateTime.now().minusDays(7).with(LocalTime.MIN);
-                //현재 날짜 - 1달
-                LocalDateTime aWeekAgoEnd = LocalDateTime.now().minusDays(7).with(LocalTime.MAX);
 
+                //-7일 전 하루 지출 총액가져오기
                 List<Expense> aWeekAgoExpenses = expenseRepository.findBySpendingTimeBetweenAndUser(
                         aWeekAgoStart, aWeekAgoEnd, user);
 
@@ -126,19 +123,16 @@ public class StatisticsService {
                         .filter(expense -> !expense.isExcludeTotalExpenses())
                         .mapToLong(Expense::getExpenses)
                         .sum();
+
                 //오늘 하루 지출 총액가져오기
-
-                LocalDateTime todayStart = LocalDateTime.now().with(LocalTime.MIN);
-                LocalDateTime todayNow = LocalDateTime.now();
-
-                List<Expense> todayExpenses = expenseRepository.findBySpendingTimeBetweenAndUser(todayStart, todayNow, user);
+                List<Expense> todayExpenses = expenseRepository.findBySpendingTimeBetweenAndUser(todayStart, now, user);
 
                 Integer todayTotalSpent = (int) todayExpenses.stream()
                         .filter(expense -> !expense.isExcludeTotalExpenses())
                         .mapToLong(Expense::getExpenses)
                         .sum();
 
-                //비교해서 퍼센티지
+                //비율
                 int compareTodayTotalPercent = (int) ((double) todayTotalSpent / aWeekAgoTotalSpent * 100);
 
                 return StatisticsResponse.builder()
@@ -146,6 +140,11 @@ public class StatisticsService {
                         .build();
 
             case "other-user":
+
+                /*
+                현재 - 모든 유저 가져오기 + 나의 정보 가져오기
+                개선 - 모든 유저 가져오기(내꺼 필터링하기)
+                 */
                 //다른 유저들의 이번달 지출 가져와서 평균내기
                 //이번달 1일
                 LocalDateTime start = LocalDateTime.now()
