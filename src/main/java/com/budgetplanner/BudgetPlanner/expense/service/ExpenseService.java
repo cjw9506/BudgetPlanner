@@ -63,12 +63,6 @@ public class ExpenseService {
         return response;
     }
 
-    private void matchUser(Authentication authentication, Expense expense) {
-        if (!expense.getUser().getAccount().equals(authentication.getName())) {
-            throw new CustomException(ErrorCode.EXPENSE_USER_MISMATCH);
-        }
-    }
-
     public ResultExpensesResponse getExpenses(Authentication authentication, ParamsRequest request) {
         User user = userRepository.findByAccount(authentication.getName())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -98,17 +92,6 @@ public class ExpenseService {
                 .build();
     }
 
-    private boolean isCategoryMatch(ParamsRequest request, GetExpensesResponse expense) {
-        return request.category() == null || expense.getCategory() == request.category();
-    }
-
-    private boolean isAmountInRange(ParamsRequest request, GetExpensesResponse expense) {
-        boolean minCondition = request.min() == null || expense.getExpenses() >= request.min();
-        boolean maxCondition = request.max() == null || expense.getExpenses() <= request.max();
-        return minCondition && maxCondition;
-    }
-
-
     @Transactional
     public void update(Long id, Authentication authentication, UpdateExpenseRequest request) {
 
@@ -123,7 +106,6 @@ public class ExpenseService {
         expense.update(request.getSpendingTime(), request.getExpenses(),
                 request.getCategory(), request.getMemo());
     }
-
 
     @Transactional
     public void delete(Long id, Authentication authentication) {
@@ -144,5 +126,21 @@ public class ExpenseService {
         matchUser(authentication, expense);
 
         expense.exclude();
+    }
+
+    private boolean isCategoryMatch(ParamsRequest request, GetExpensesResponse expense) {
+        return request.category() == null || expense.getCategory() == request.category();
+    }
+
+    private boolean isAmountInRange(ParamsRequest request, GetExpensesResponse expense) {
+        boolean minCondition = request.min() == null || expense.getExpenses() >= request.min();
+        boolean maxCondition = request.max() == null || expense.getExpenses() <= request.max();
+        return minCondition && maxCondition;
+    }
+
+    private void matchUser(Authentication authentication, Expense expense) {
+        if (!expense.getUser().getAccount().equals(authentication.getName())) {
+            throw new CustomException(ErrorCode.EXPENSE_USER_MISMATCH);
+        }
     }
 }
