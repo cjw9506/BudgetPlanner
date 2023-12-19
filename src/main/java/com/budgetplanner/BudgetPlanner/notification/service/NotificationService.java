@@ -32,20 +32,9 @@ public class NotificationService {
         List<User> users = userRepository.findAll();
 
         for (User user : users) {
-            List<Budget> budgets = expenseAdvisorService.getBudgetsForUser(user.getId());
-
-            int remainingDays = expenseAdvisorService.calculateRemainingDays();
-            long budget = expenseAdvisorService.getBudgets(budgets);
-            long spentAmount = expenseAdvisorService.amountUsedThisMonth(user);
-            int dailyAmount = expenseAdvisorService.calculateDailyAmount(remainingDays, budget, spentAmount);
-
-            Map<Category, Double> categoryRatios = expenseAdvisorService.calculateCategoryRatios(budgets, budget);
-            Map<Category, Integer> categoryBudgets = expenseAdvisorService.getCategoryBudgets(budgets, dailyAmount, categoryRatios);
-
-            String comment = (dailyAmount < DAILY_MIN_BUDGET) ?
-                    "이번 달 소비가 많습니다. 오늘은 절약하시는 것을 추천드립니다! 화이팅!" : "이번 달 소비 계획이 잘 지켜지고 있습니다!";
-
-            sendUserBudgetRecommendMessage(user, dailyAmount, categoryBudgets, comment);
+            BudgetRecommendationResponse response = expenseAdvisorService.getRecommendationWebhook(user);
+            sendUserBudgetRecommendMessage(user, response.getDailyAmount(),
+                    response.getCategoryBudgets(), response.getComment());
         }
 
     }
@@ -54,21 +43,11 @@ public class NotificationService {
         List<User> users = userRepository.findAll();
 
         for (User user : users) {
-            List<Expense> expenses = expenseAdvisorService.getExpensesToday(user);
-            int todaySpentAmount = expenseAdvisorService.calculateTodaySpentAmount(expenses);
-            Map<Category, Integer> todayCategorySpent = expenseAdvisorService.calculateTodayCategorySpent(expenses);
+            BudgetGuideResponse response = expenseAdvisorService.getGuideWebhook(user);
 
-            List<Budget> budgets = expenseAdvisorService.getBudgetsForUser(user.getId());
-            int remainingDays = expenseAdvisorService.calculateRemainingDays();
-            long budget = expenseAdvisorService.getBudgets(budgets);
-            long spentAmount = expenseAdvisorService.amountUsedThisMonth(user);
-            int dailyAmount = expenseAdvisorService.calculateDailyAmount(remainingDays, budget, spentAmount);
-
-            Map<Category, Double> categoryRatios = expenseAdvisorService.calculateCategoryRatios(budgets, budget);
-            Map<Category, Integer> categoryBudgets = expenseAdvisorService.getCategoryBudgets(budgets, dailyAmount, categoryRatios);
-            Map<Category, String> riskByCategory = expenseAdvisorService.riskByCategory(todayCategorySpent, categoryBudgets);
-
-            sendUserBudgetGuideMessage(user, todaySpentAmount, todayCategorySpent, categoryBudgets, riskByCategory);
+            sendUserBudgetGuideMessage(user, response.getTodaySpentAmount(),
+                    response.getTodayCategorySpent(), response.getCategoryBudgets(),
+                    response.getRisk());
         }
     }
 
