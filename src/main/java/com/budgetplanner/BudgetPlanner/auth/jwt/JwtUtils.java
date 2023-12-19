@@ -17,8 +17,11 @@ import java.util.function.Function;
 @Component
 public class JwtUtils {
 
-    @Value("${jwt.secret.access.key}")
-    private String accessSecretKey;
+    @Value("${jwt.secret.key}")
+    private String secretKey;
+
+    private long accessExpiration = 60 * 60 * 1000;
+    private long refreshExpiration = 60 * 60 * 24 * 7 * 1000;
 
     public String extractAccount(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -29,16 +32,21 @@ public class JwtUtils {
         return claimsResolver.apply(claims);
     }
 
-    public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+    public String generateAccessToken(UserDetails userDetails) {
+        return generateToken(new HashMap<>(), userDetails, accessExpiration);
     }
 
-    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+    public String generateRefreshToken(UserDetails userDetails) {
+        return generateToken(new HashMap<>(), userDetails, refreshExpiration);
+    }
+
+    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails,
+                                long expiration) {
         return Jwts.builder()
                 .claims(extraClaims)
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 1000))
+                .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSignInKey())
                 .compact();
     }
@@ -65,7 +73,7 @@ public class JwtUtils {
     }
 
     private Key getSignInKey() {
-        byte[] decodedKey = Decoders.BASE64.decode(accessSecretKey);
+        byte[] decodedKey = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(decodedKey);
     }
 }
