@@ -1,5 +1,6 @@
 package com.budgetplanner.BudgetPlanner.auth.service;
 
+import com.budgetplanner.BudgetPlanner.auth.dto.AuthenticationResponse;
 import com.budgetplanner.BudgetPlanner.auth.dto.UserLoginRequest;
 import com.budgetplanner.BudgetPlanner.auth.dto.UserSignupRequest;
 import com.budgetplanner.BudgetPlanner.auth.jwt.JwtUtils;
@@ -8,6 +9,8 @@ import com.budgetplanner.BudgetPlanner.common.exception.ErrorCode;
 import com.budgetplanner.BudgetPlanner.user.entity.User;
 import com.budgetplanner.BudgetPlanner.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +22,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
+    private final AuthenticationManager authenticationManager;
 
 
     @Transactional
@@ -28,34 +32,30 @@ public class AuthService {
             throw new CustomException(ErrorCode.USER_ALREADY_EXIST);
         }
 
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
-
         User user = User.builder()
                 .account(request.getAccount())
-                .password(encodedPassword)
+                .password(passwordEncoder.encode(request.getPassword()))
                 .webhookUrl(request.getWebhookUrl())
                 .build();
 
         userRepository.save(user);
     }
 
-    public String[] userLogin(UserLoginRequest request) {
+    public AuthenticationResponse userLogin(UserLoginRequest request) {
 
-        userRepository.findByAccount(request.getAccount()).
-                filter(user -> {
-                    if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                        return true;
-                    } else {
-                        throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
-                    }
-                })
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getAccount(),
+                        request.getPassword()
+                )
+        );
+        User user = userRepository.findByAccount(request.getAccount()).orElseThrow(
+                () -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        return jwtUtils.generateToken(request.getAccount());
+        String jwtToken = jwtUtils.generateToken(user);
+        return AuthenticationResponse.builder()
+                .token(jwtToken)
+                .build();
     }
 
-    public String issueRefreshToken(String refreshToken) {
-
-        return jwtUtils.verifyRefreshTokenAndReissue(refreshToken);
-    }
 }
