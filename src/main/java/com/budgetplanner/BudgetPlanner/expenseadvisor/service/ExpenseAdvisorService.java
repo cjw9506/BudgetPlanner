@@ -98,6 +98,67 @@ public class ExpenseAdvisorService {
                 .build();
     }
 
+    /*
+     * 오늘 지출 추천 - 웹훅
+     * */
+    public BudgetRecommendationResponse getRecommendationWebhook(User user) {
+
+        List<Budget> budgets = getBudgetsForUser(user.getId());
+        int remainingDays = calculateRemainingDays(); //남은 일수 계산
+        long budget = getBudgets(budgets); //유저의 설정된 예산
+        List<Expense> expenses = expensesThisMonth(user); //유저가 이제까지 쓴 금액
+        long spentAmount = amountUsedThisMonth(expenses); //이번달 총 지출
+        int dailyAmount = calculateDailyAmount(remainingDays, budget, spentAmount); //오늘 지출 가능한 금액
+
+        comment = (dailyAmount < DAILY_MIN_BUDGET) ?
+                "이번 달 소비가 많습니다. 오늘은 절약하시는 것을 추천드립니다! 화이팅!" :
+                "이번 달 소비 계획이 잘 지켜지고 있습니다!";
+
+        //유저 카테고리별 예산 비율 구하기
+        Map<Category, Double> categoryRatios = calculateCategoryRatios(budgets, budget); //유저 예산 비율 구하기
+        //카테고리별 사용 가능한 유저 예산
+        Map<Category, Integer> categoryBudgets = getCategoryBudgets(budgets, dailyAmount, categoryRatios);
+
+        return BudgetRecommendationResponse.builder()
+                .dailyAmount(dailyAmount)
+                .categoryBudgets(categoryBudgets)
+                .comment(comment)
+                .build();
+
+    }
+
+    /*
+     * 오늘 지출 안내 - 웹훅
+     * */
+    public BudgetGuideResponse getGuideWebhook(User user) {
+
+        List<Expense> expensesThisMonth = expensesThisMonth(user); //이번달 지출
+        List<Expense> expensesToday = getExpensesToday(expensesThisMonth); //오늘 지출
+
+        int todaySpentAmount = calculateTodaySpentAmount(expensesToday); //오늘 지출한 총액
+        Map<Category, Integer> todayCategorySpent = calculateTodayCategorySpent(expensesToday); //오늘 카테고리 별 사용한 금액
+
+        List<Budget> budgets = getBudgetsForUser(user.getId());
+        int remainingDays = calculateRemainingDays(); //남은 일수 계산
+        long budget = getBudgets(budgets); //유저의 설정된 예산
+        long spentAmount = amountUsedThisMonth(expensesThisMonth); //이번달 총 지출
+        int dailyAmount = calculateDailyAmount(remainingDays, budget, spentAmount); //오늘 지출 가능한 금액
+
+        //유저 카테고리별 예산 비율 구하기
+        Map<Category, Double> categoryRatios = calculateCategoryRatios(budgets, budget);
+        //카테고리별 사용 가능한 유저 예산
+        Map<Category, Integer> categoryBudgets = getCategoryBudgets(budgets, dailyAmount, categoryRatios);
+        //오늘 카테고리 별 위험도
+        Map<Category, String> riskByCategory = riskByCategory(todayCategorySpent, categoryBudgets);
+
+        return BudgetGuideResponse.builder()
+                .todaySpentAmount(todaySpentAmount)
+                .todayCategorySpent(todayCategorySpent)
+                .categoryBudgets(categoryBudgets)
+                .risk(riskByCategory)
+                .build();
+    }
+
     public List<Expense> getExpensesToday(List<Expense> expensesThisMonth) {
         return expensesThisMonth.stream()
                 .filter(expense ->
