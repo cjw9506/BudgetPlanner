@@ -45,7 +45,7 @@ public class ExpenseService {
 
     public GetExpenseResponse getExpense(Long id, Authentication authentication) {
 
-        Expense expense = expenseRepository.findById(id)
+        Expense expense = expenseRepository.findByIdWithUser(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.EXPENSE_NOT_FOUND));
 
         matchUser(authentication, expense);
