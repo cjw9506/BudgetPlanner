@@ -1,105 +1,72 @@
 package com.budgetplanner.BudgetPlanner.auth.jwt;
 
-import com.budgetplanner.BudgetPlanner.common.exception.CustomException;
-import com.budgetplanner.BudgetPlanner.common.exception.ErrorCode;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 @Component
 public class JwtUtils {
 
     @Value("${jwt.secret.access.key}")
     private String accessSecretKey;
-    @Value("${jwt.secret.refresh.key")
-    private String refreshSecretKey;
 
+    public String extractAccount(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
 
-    private final static Long EXPIRED_ACCESS_MS = 60 * 60 * 1000L;
-    private final static Long EXPIRED_REFRESH_MS = 60 * 60 * 24 * 1000L;
-    private final static String ACCESS_TOKEN = "accessToken";
-    private final static String REFRESH_TOKEN = "refreshToken";
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
 
-    public String[] generateToken(String account) {
-        Claims accessClaims = Jwts.claims();
-        accessClaims.put("type", ACCESS_TOKEN);
-        accessClaims.put("account", account);
+    public String generateToken(UserDetails userDetails) {
+        return generateToken(new HashMap<>(), userDetails);
+    }
 
-        String accessToken = Jwts.builder()
-                .setClaims(accessClaims)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRED_ACCESS_MS))
-                .signWith(SignatureAlgorithm.HS512, accessSecretKey)
+    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+        return Jwts.builder()
+                .claims(extraClaims)
+                .subject(userDetails.getUsername())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 1000))
+                .signWith(getSignInKey())
                 .compact();
-
-        Claims refreshClaims = Jwts.claims();
-        refreshClaims.put("type", REFRESH_TOKEN);
-        refreshClaims.put("account", account);
-
-        String refreshToken = Jwts.builder()
-                .setClaims(refreshClaims)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRED_REFRESH_MS))
-                .signWith(SignatureAlgorithm.HS512, refreshSecretKey)
-                .compact();
-
-        String[] tokens = new String[] {accessToken, refreshToken};
-
-        return tokens;
-
     }
 
-    public String extractAccount(String accessToken) {
-        return Jwts.parser().setSigningKey(accessSecretKey).parseClaimsJws(accessToken).getBody().get("account", String.class);
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        final String account = extractAccount(token);
+        return (account.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
 
-    public boolean isTokenValid(String token) {
-        try {
-            Date expiredDate = Jwts.parser().setSigningKey(accessSecretKey).parseClaimsJws(token).getBody().getExpiration();
-            Date currentDate = new Date();
-            return !expiredDate.before(currentDate);
-        } catch (JwtException e) {
-            throw new CustomException(ErrorCode.EXPIRED_TOKEN);
-        }
+    private boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
     }
 
-    public String verifyRefreshTokenAndReissue(String refreshToken) {
+    private Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
 
-        if (refreshToken == null || refreshToken.startsWith("Bearer")) {
-            throw new CustomException(ErrorCode.INVALID_TOKEN);
-        }
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .keyLocator(header -> getSignInKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
 
-        Date expiredDate = Jwts.parser().setSigningKey(refreshSecretKey).parseClaimsJws(refreshToken).getBody().getExpiration();
-        Date currentDate = new Date();
-
-        if (!expiredDate.before(currentDate)) {
-            String account = Jwts.parser().setSigningKey(refreshSecretKey).parseClaimsJws(refreshToken).getBody().get("account", String.class);
-
-            if (account == null || account.isEmpty()) {
-                throw new CustomException(ErrorCode.INVALID_TOKEN);
-            } else {
-                Claims accessClaims = Jwts.claims();
-                accessClaims.put("type", ACCESS_TOKEN);
-                accessClaims.put("account", account);
-
-                String accessToken = Jwts.builder()
-                        .setClaims(accessClaims)
-                        .setIssuedAt(new Date(System.currentTimeMillis()))
-                        .setExpiration(new Date(System.currentTimeMillis() + EXPIRED_ACCESS_MS))
-                        .signWith(SignatureAlgorithm.HS512, accessSecretKey)
-                        .compact();
-
-                return accessToken;
-            }
-        } else {
-            throw new CustomException(ErrorCode.EXPIRED_TOKEN);
-        }
-
+    private Key getSignInKey() {
+        byte[] decodedKey = Decoders.BASE64.decode(accessSecretKey);
+        return Keys.hmacShaKeyFor(decodedKey);
     }
 }
 
