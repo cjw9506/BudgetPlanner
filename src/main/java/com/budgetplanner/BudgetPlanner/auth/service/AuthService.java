@@ -1,5 +1,6 @@
 package com.budgetplanner.BudgetPlanner.auth.service;
 
+import com.budgetplanner.BudgetPlanner.auth.dto.AccessTokenResponse;
 import com.budgetplanner.BudgetPlanner.auth.dto.AuthenticationResponse;
 import com.budgetplanner.BudgetPlanner.auth.dto.UserLoginRequest;
 import com.budgetplanner.BudgetPlanner.auth.dto.UserSignupRequest;
@@ -69,6 +70,23 @@ public class AuthService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
+    }
+
+    public AccessTokenResponse reissue(String refreshToken) {
+
+        if (refreshTokenRepository.findById(refreshToken)) {
+            String account = jwtUtils.extractAccount(refreshToken);
+
+            User user = userRepository.findByAccount(account).orElseThrow(
+                    () -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+            String newAccessToken = jwtUtils.generateAccessToken(user);
+
+            return AccessTokenResponse.builder()
+                    .token(newAccessToken)
+                    .build();
+        }
+        throw new CustomException(ErrorCode.INVALID_TOKEN);
     }
 
 }

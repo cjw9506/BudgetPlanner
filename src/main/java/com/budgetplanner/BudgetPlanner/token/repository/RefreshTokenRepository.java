@@ -20,6 +20,11 @@ public class RefreshTokenRepository {
         redisTemplate.expire(refreshToken.getRefreshToken(), 60 * 60 * 24 * 7, TimeUnit.SECONDS);
     }
 
+    public boolean findById(final String refreshToken) {
+        return redisTemplate.hasKey(refreshToken);
+
+    }
+
     public void delete(final String refreshToken) {
         redisTemplate.delete(refreshToken);
     }
