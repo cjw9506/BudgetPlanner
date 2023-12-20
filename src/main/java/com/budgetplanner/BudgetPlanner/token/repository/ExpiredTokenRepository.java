@@ -20,4 +20,8 @@ public class ExpiredTokenRepository {
         redisTemplate.expire(expiredToken.getExpiredToken(), time, TimeUnit.SECONDS);
     }
 
+    public boolean isBlackList(final String expiredToken) {
+        return redisTemplate.hasKey(expiredToken);
+    }
+
 }
