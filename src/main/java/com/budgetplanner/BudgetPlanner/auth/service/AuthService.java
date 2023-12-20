@@ -6,6 +6,8 @@ import com.budgetplanner.BudgetPlanner.auth.dto.UserSignupRequest;
 import com.budgetplanner.BudgetPlanner.auth.jwt.JwtUtils;
 import com.budgetplanner.BudgetPlanner.common.exception.CustomException;
 import com.budgetplanner.BudgetPlanner.common.exception.ErrorCode;
+import com.budgetplanner.BudgetPlanner.token.entity.RefreshToken;
+import com.budgetplanner.BudgetPlanner.token.repository.RefreshTokenRepository;
 import com.budgetplanner.BudgetPlanner.user.entity.User;
 import com.budgetplanner.BudgetPlanner.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
+    private final RefreshTokenRepository refreshTokenRepository;
 
 
     @Transactional
@@ -52,9 +55,19 @@ public class AuthService {
         User user = userRepository.findByAccount(request.getAccount()).orElseThrow(
                 () -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        String jwtToken = jwtUtils.generateToken(user);
+        String accessToken = jwtUtils.generateAccessToken(user);
+        String refreshToken = jwtUtils.generateRefreshToken(user);
+
+        RefreshToken RT = RefreshToken.builder()
+                .refreshToken(refreshToken)
+                .memberId(user.getId())
+                .build();
+
+        refreshTokenRepository.save(RT);
+
         return AuthenticationResponse.builder()
-                .token(jwtToken)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .build();
     }
 

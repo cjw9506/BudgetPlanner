@@ -1,5 +1,6 @@
 package com.budgetplanner.BudgetPlanner.auth.controller;
 
+import com.budgetplanner.BudgetPlanner.auth.dto.AccessTokenResponse;
 import com.budgetplanner.BudgetPlanner.auth.dto.AuthenticationResponse;
 import com.budgetplanner.BudgetPlanner.auth.dto.UserLoginRequest;
 import com.budgetplanner.BudgetPlanner.auth.dto.UserSignupRequest;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,9 +35,21 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody UserLoginRequest request) {
 
-        AuthenticationResponse response = authService.userLogin(request);
+        AuthenticationResponse tokens = authService.userLogin(request);
 
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        AccessTokenResponse response = AccessTokenResponse.builder()
+                .token(tokens.getAccessToken())
+                .build();
+
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokens.getRefreshToken())
+                .httpOnly(true)
+                .path("/")
+                .maxAge(7 * 24 * 60 * 60)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .header("Set-Cookie", cookie.toString())
+                .body(response);
 
     }
 
