@@ -66,9 +66,10 @@ public class AuthController {
 
     @Operation(summary = "로그아웃", description = "로그아웃")
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String accessToken,
+                                    @CookieValue("refreshToken") String refreshToken) {
 
-        authService.logout(token);
+        authService.logout(accessToken, refreshToken);
 
         return ResponseEntity.status(HttpStatus.OK).body(null);
     }

@@ -92,18 +92,20 @@ public class AuthService {
         throw new CustomException(ErrorCode.INVALID_TOKEN);
     }
 
-    public void logout(String token) {
+    public void logout(String accessToken, String refreshToken) {
 
-        String accessToken = token.substring(7);
-        long expiredTime = jwtUtils.extractExpiration(accessToken).getTime();
+        String AT = accessToken.substring(7);
+
+        long expiredTime = jwtUtils.extractExpiration(AT).getTime();
         long storageTimeMillis = expiredTime - System.currentTimeMillis();
         long StorageTimeSeconds = storageTimeMillis / 1000;
 
         ExpiredToken expiredToken = ExpiredToken.builder()
-                .expiredToken(accessToken)
+                .expiredToken(AT)
                 .build();
 
         expiredTokenRepository.save(expiredToken, StorageTimeSeconds);
 
+        refreshTokenRepository.delete(refreshToken);
     }
 }
