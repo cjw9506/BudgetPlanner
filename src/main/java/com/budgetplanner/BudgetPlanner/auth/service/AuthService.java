@@ -7,7 +7,9 @@ import com.budgetplanner.BudgetPlanner.auth.dto.UserSignupRequest;
 import com.budgetplanner.BudgetPlanner.auth.jwt.JwtUtils;
 import com.budgetplanner.BudgetPlanner.common.exception.CustomException;
 import com.budgetplanner.BudgetPlanner.common.exception.ErrorCode;
+import com.budgetplanner.BudgetPlanner.token.entity.ExpiredToken;
 import com.budgetplanner.BudgetPlanner.token.entity.RefreshToken;
+import com.budgetplanner.BudgetPlanner.token.repository.ExpiredTokenRepository;
 import com.budgetplanner.BudgetPlanner.token.repository.RefreshTokenRepository;
 import com.budgetplanner.BudgetPlanner.user.entity.User;
 import com.budgetplanner.BudgetPlanner.user.repository.UserRepository;
@@ -27,6 +29,7 @@ public class AuthService {
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final ExpiredTokenRepository expiredTokenRepository;
 
 
     @Transactional
@@ -89,4 +92,18 @@ public class AuthService {
         throw new CustomException(ErrorCode.INVALID_TOKEN);
     }
 
+    public void logout(String token) {
+
+        String accessToken = token.substring(7);
+        long expiredTime = jwtUtils.extractExpiration(accessToken).getTime();
+        long storageTimeMillis = expiredTime - System.currentTimeMillis();
+        long StorageTimeSeconds = storageTimeMillis / 1000;
+
+        ExpiredToken expiredToken = ExpiredToken.builder()
+                .expiredToken(accessToken)
+                .build();
+
+        expiredTokenRepository.save(expiredToken, StorageTimeSeconds);
+
+    }
 }
