@@ -12,6 +12,7 @@ import com.budgetplanner.BudgetPlanner.common.exception.ErrorCode;
 import com.budgetplanner.BudgetPlanner.user.entity.User;
 import com.budgetplanner.BudgetPlanner.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,7 @@ public class BudgetService {
     private final BudgetRepository budgetRepository;
     private final UserRepository userRepository;
 
+    @Cacheable(value = "categories", key = "'allCategories'")
     public List<CategoriesResponse> getCategories() {
 
         return Arrays.stream(Category.values())
@@ -67,6 +69,7 @@ public class BudgetService {
     }
 
 
+    @Cacheable(value = "budget", key = "'recommend'")
     public List<BudgetRecommendResponse> recommend(BudgetRecommendRequest request) {
         List<Object[]> data = budgetRepository.findCategoryAndBudget();
         long[] budgets = data.stream().mapToLong(entry -> ((Number) entry[1]).longValue()).toArray();

@@ -1,8 +1,10 @@
 package com.budgetplanner.BudgetPlanner.budget.dto;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor
 public class CategoriesResponse {
 
     private String categoryCode;
