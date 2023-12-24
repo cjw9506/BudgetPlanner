@@ -3,11 +3,13 @@ package com.budgetplanner.BudgetPlanner.expense.dto;
 import com.budgetplanner.BudgetPlanner.budget.entity.Category;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
 
 @Getter
+@NoArgsConstructor
 public class ResultExpensesResponse {
 
     private Long totalExpenses;

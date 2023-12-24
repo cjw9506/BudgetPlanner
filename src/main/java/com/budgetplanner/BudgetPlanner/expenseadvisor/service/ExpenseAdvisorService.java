@@ -12,6 +12,9 @@ import com.budgetplanner.BudgetPlanner.expenseadvisor.dto.BudgetRecommendationRe
 import com.budgetplanner.BudgetPlanner.user.entity.User;
 import com.budgetplanner.BudgetPlanner.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +41,7 @@ public class ExpenseAdvisorService {
     /*
      * 오늘 지출 추천
      * */
+    @Cacheable(value = "expense", key = "'recommend:' + #authentication.name")
     public BudgetRecommendationResponse getRecommendation(Authentication authentication) {
 
         User user = getUser(authentication);
@@ -67,6 +71,7 @@ public class ExpenseAdvisorService {
     /*
     * 오늘 지출 안내
     * */
+    @Cacheable(value = "expense", key = "'guide:' + #authentication.name")
     public BudgetGuideResponse getGuide(Authentication authentication) {
 
         User user = getUser(authentication);
@@ -97,6 +102,14 @@ public class ExpenseAdvisorService {
                 .risk(riskByCategory)
                 .build();
     }
+
+    @CacheEvict(value = "expense", key = "'recommend:' + #authentication.name")
+    @Scheduled(cron = "0 59 09 * * ?")
+    public void recommendDataReset() {}
+
+    @CacheEvict(value = "expense", key = "'guide:' + #authentication.name")
+    @Scheduled(cron = "0 59 21 * * ?")
+    public void guideDataReset() {}
 
     /*
      * 오늘 지출 추천 - 웹훅
