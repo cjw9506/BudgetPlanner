@@ -104,11 +104,11 @@ public class ExpenseAdvisorService {
     }
 
     @CacheEvict(value = "expense", key = "'recommend:' + #authentication.name")
-    @Scheduled(cron = "0 0 10 * * ?")
+    @Scheduled(cron = "0 59 09 * * ?")
     public void recommendDataReset() {}
 
     @CacheEvict(value = "expense", key = "'guide:' + #authentication.name")
-    @Scheduled(cron = "0 0 22 * * ?")
+    @Scheduled(cron = "0 59 21 * * ?")
     public void guideDataReset() {}
 
     /*
