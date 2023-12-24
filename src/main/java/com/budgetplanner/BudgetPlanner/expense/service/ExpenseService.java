@@ -9,6 +9,8 @@ import com.budgetplanner.BudgetPlanner.expense.repository.ExpenseRepository;
 import com.budgetplanner.BudgetPlanner.user.entity.User;
 import com.budgetplanner.BudgetPlanner.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +65,7 @@ public class ExpenseService {
         return response;
     }
 
+    @Cacheable(value = "expense", key = "'list:' + #authentication.name")
     public ResultExpensesResponse getExpenses(Authentication authentication, ParamsRequest request) {
         User user = userRepository.findByAccount(authentication.getName())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -92,6 +95,7 @@ public class ExpenseService {
                 .build();
     }
 
+    @CacheEvict(value = "expense", key = "'list:' + #authentication.name")
     @Transactional
     public void update(Long id, Authentication authentication, UpdateExpenseRequest request) {
 
@@ -107,6 +111,7 @@ public class ExpenseService {
                 request.getCategory(), request.getMemo());
     }
 
+    @CacheEvict(value = "expense", key = "'list:' + #authentication.name")
     @Transactional
     public void delete(Long id, Authentication authentication) {
         userRepository.findByAccount(authentication.getName())
@@ -115,6 +120,7 @@ public class ExpenseService {
         expenseRepository.deleteById(id);
     }
 
+    @CacheEvict(value = "expense", key = "'list:' + #authentication.name")
     @Transactional
     public void exclude(Long id, Authentication authentication) {
         User user = userRepository.findByAccount(authentication.getName())
