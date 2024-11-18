@@ -27,10 +27,12 @@ BudgetPlanner는 사용자의 예산과 지출 관리에 대한 추천 및 관�
 ## 0. 목차
 - [1.개발 기간](#1-개발-기간)
 - [2.프로젝트 요구사항](#2-프로젝트-요구사항)
-- [3.프로젝트 구조](#3-프로젝트-구조)
-- [4.ERD](#4-erd)
-- [5.동작예시](#5-동작예시)
-- [6.API 문서](#6-api-문서)
+- [3.아키텍처](#3-아키텍처)
+- [4.프로젝트 구조](#3-프로젝트-구조)
+- [5.ERD](#4-erd)
+- [6.동작예시](#5-동작예시)
+- [7.API 문서](#6-api-문서)
+- [8.프로젝트 중 고려사항](#7-프로젝트-중-고려사항)
 
 ## 1. 개발 기간
 
@@ -65,10 +67,12 @@ BudgetPlanner는 사용자의 예산과 지출 관리에 대한 추천 및 관�
     - 지난 요일 대비 소비율 계산.
     - 다른 유저 대비 소비율 계산.
 
-## 3. 프로젝트 구조
+## 3. 아키텍처
+<img width="922" alt="스크린샷 2023-12-24 오후 4 21 59 (1)" src="https://github.com/user-attachments/assets/9f0a0869-c2c6-4b4e-b01a-df13c408d7f5">
 
-<details>
-    <summary>자세히</summary>
+
+## 4. 프로젝트 구조
+
 
 ```
 └── BudgetPlanner
@@ -113,18 +117,29 @@ BudgetPlanner는 사용자의 예산과 지출 관리에 대한 추천 및 관�
 
 </details>
 
-## 4. ERD
+## 5. ERD
 
   <img width="662" alt="스크린샷 2023-11-24 오후 5 43 24" src="https://github.com/cjw9506/BudgetPlanner/assets/63503519/9f699418-b02f-4f37-94a1-b1105499229c">
 
-## 5. 동작예시
+## 6. 동작예시
 
   <img width="407" alt="스크린샷 2023-11-22 오전 1 30 57" src="https://github.com/cjw9506/BudgetPlanner/assets/63503519/efe0c1b0-f60c-4272-b7f8-2881c0febc13">
   
 
-## 6. API 문서
+## 7. API 문서
 
-URL : `http://server:port/swagger-ui/index.html`
 
 <img width="800" alt="스크린샷 2023-11-26 오후 9 33 32" src="https://github.com/cjw9506/BudgetPlanner/assets/63503519/28793e15-ce25-45a6-be06-3b6140f90b25">
+
+## 8. 프로젝트 중 고려사항
+
+### 1. Spring Security와 JWT를 활용하여 토큰 취약점 개선
+
+<img width="808" alt="스크린샷 2024-11-18 오후 10 26 14" src="https://github.com/user-attachments/assets/b9fbc535-3ca4-42ee-99f2-60c86dbae780">
+
+### 2. 캐싱 도입과 N+1 문제 해결을 통한 성능 향상
+
+<img width="865" alt="스크린샷 2024-11-18 오후 10 27 06" src="https://github.com/user-attachments/assets/533b2224-a04c-4ca9-b443-46a4261c8a4a">
+
+
 
