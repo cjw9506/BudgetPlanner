@@ -39,8 +39,6 @@ public class BudgetService {
                 .collect(Collectors.toList());
     }
 
-
-    //todo 아래 기능은 카테고리 갯수만큼 예산이 저장된다. -> 유지 vs 적절한 자료구조로 한 유저당 하나의 budget만 관리하도록 변경
     @Transactional
     public void setting(BudgetSettingsRequest request, Authentication authentication) {
 
