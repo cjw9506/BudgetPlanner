@@ -28,6 +28,7 @@ public class NotificationService {
 
     private static final int DAILY_MIN_BUDGET = 10000;
 
+    //todo 트랜잭션도 안걸려있고... for문이라... 개선 시급함
     public void sendRecommendMessages() throws JsonProcessingException {
         List<User> users = userRepository.findAll();
 
@@ -39,6 +40,7 @@ public class NotificationService {
 
     }
 
+    //todo 위와 마찬가지
     public void sendGuideMessages() throws JsonProcessingException {
         List<User> users = userRepository.findAll();
 

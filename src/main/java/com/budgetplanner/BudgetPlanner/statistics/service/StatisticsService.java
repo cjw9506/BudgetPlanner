@@ -28,6 +28,7 @@ public class StatisticsService {
     private final ExpenseRepository expenseRepository;
     private final UserRepository userRepository;
 
+    //todo 코드가 너무 난잡함 개선해볼것
     public StatisticsResponse getStatistics(String data, Authentication authentication) {
 
         //저번달 1일

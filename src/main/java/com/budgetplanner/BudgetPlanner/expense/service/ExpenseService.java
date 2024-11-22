@@ -65,6 +65,7 @@ public class ExpenseService {
         return response;
     }
 
+    //todo 해당 기능은 기간조회 및 지출 합계 + 카테고리 별 지출 합계 제공, 특정 카테고리, 최소, 최대로 조회가능 최적화할 방법 찾아보기 -> 인덱스 걸려있나보고 개선
     @Cacheable(value = "expense", key = "'list:' + #authentication.name")
     public ResultExpensesResponse getExpenses(Authentication authentication, ParamsRequest request) {
         User user = userRepository.findByAccount(authentication.getName())
@@ -120,6 +121,8 @@ public class ExpenseService {
         expenseRepository.deleteById(id);
     }
 
+
+    //todo 불필요한 조회가 들어가 있는 것 같음
     @CacheEvict(value = "expense", key = "'list:' + #authentication.name")
     @Transactional
     public void exclude(Long id, Authentication authentication) {

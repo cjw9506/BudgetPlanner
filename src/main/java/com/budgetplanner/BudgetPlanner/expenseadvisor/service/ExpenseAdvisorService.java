@@ -41,6 +41,10 @@ public class ExpenseAdvisorService {
     /*
      * 오늘 지출 추천
      * */
+    //todo 최적화하기 우선적으로 쿼리나 인덱스 확인하고, 작업이 동기적이니....
+    //todo 응답시간이 너무 오래 걸림 -> 사용자 경험 최악
+    //todo 1차원적으로 캐싱을 하긴했지만, 첫 응답은 오래걸림
+    //todo 배치로 어제까지를 계산해서 저장해놓은 다음 활용하는게 훨씬 좋다고 일단은 생각중
     @Cacheable(value = "expense", key = "'recommend:' + #authentication.name")
     public BudgetRecommendationResponse getRecommendation(Authentication authentication) {
 
@@ -71,6 +75,7 @@ public class ExpenseAdvisorService {
     /*
     * 오늘 지출 안내
     * */
+    //todo 위의 오늘 지출 추천과 같음
     @Cacheable(value = "expense", key = "'guide:' + #authentication.name")
     public BudgetGuideResponse getGuide(Authentication authentication) {
 
