@@ -36,42 +36,71 @@ public class ExpenseAdvisorService {
     private final ExpenseRepository expenseRepository;
 
     private static final int DAILY_MIN_BUDGET = 10000;
-    private static String comment = "";
+    private static String comment;
 
     /*
      * 오늘 지출 추천
      * */
-    //todo 최적화하기 우선적으로 쿼리나 인덱스 확인하고, 작업이 동기적이니....
-    //todo 응답시간이 너무 오래 걸림 -> 사용자 경험 최악
-    //todo 1차원적으로 캐싱을 하긴했지만, 첫 응답은 오래걸림
+
     //todo 배치로 어제까지를 계산해서 저장해놓은 다음 활용하는게 훨씬 좋다고 일단은 생각중
     @Cacheable(value = "expense", key = "'recommend:' + #authentication.name")
     public BudgetRecommendationResponse getRecommendation(Authentication authentication) {
 
-        User user = getUser(authentication);
-        List<Budget> budgets = getBudgetsForUser(user.getId());
-        int remainingDays = calculateRemainingDays(); //남은 일수 계산
-        long budget = getBudgets(budgets); //유저의 설정된 예산
-        List<Expense> expenses = expensesThisMonth(user); //유저가 이제까지 쓴 금액
-        long spentAmount = amountUsedThisMonth(expenses); //이번달 총 지출
-        int dailyAmount = calculateDailyAmount(remainingDays, budget, spentAmount); //오늘 지출 가능한 금액
+        String account = authentication.getName();
+        YearMonth yearMonth = YearMonth.now();
+        LocalDate today = LocalDate.now();
+        LocalDate lastDayOfMonth = today.withDayOfMonth(today.lengthOfMonth());
+        LocalDateTime startOfMonth = LocalDateTime.of(today.withDayOfMonth(1), LocalTime.MIN);
+        LocalDateTime yesterday = LocalDateTime.now().minusDays(1).with(LocalTime.MAX);
 
-        comment = (dailyAmount < DAILY_MIN_BUDGET) ?
+        // 1. 예산 데이터 가져오기
+        List<Budget> budgets = budgetRepository.findBudgetsByAccountAndYearMonth(account, yearMonth);
+
+        // 2. 예산 총합 계산
+        long totalBudget = budgets.stream()
+                .mapToLong(Budget::getBudget)
+                .sum();
+
+        // 3. 남은 일수 계산
+        int remainingDays = (int) ChronoUnit.DAYS.between(today, lastDayOfMonth);
+
+        // 4. 지출 데이터 가져오기
+        List<Expense> expenses = expenseRepository.findExpensesByAccountAndPeriod(account, startOfMonth, yesterday);
+        long totalSpent = expenses.stream()
+                .filter(expense -> !expense.isExcludeTotalExpenses()) // 제외된 항목 제외
+                .mapToLong(Expense::getExpenses)
+                .sum();
+
+        // 5. 하루 예산 계산 (남은 예산 / 남은 일수)
+        int dailyAmount = (int) Math.floor((double) (totalBudget - totalSpent) / remainingDays / 100) * 100;
+
+        // 6. 댓글 로직 (예산과 지출에 따른 코멘트 제공)
+        String comment = (dailyAmount < DAILY_MIN_BUDGET) ?
                 "이번 달 소비가 많습니다. 오늘은 절약하시는 것을 추천드립니다! 화이팅!" :
                 "이번 달 소비 계획이 잘 지켜지고 있습니다!";
 
-        //유저 카테고리별 예산 비율 구하기
-        Map<Category, Double> categoryRatios = calculateCategoryRatios(budgets, budget); //유저 예산 비율 구하기
-        //카테고리별 사용 가능한 유저 예산
-        Map<Category, Integer> categoryBudgets = getCategoryBudgets(budgets, dailyAmount, categoryRatios);
+        // 7. 카테고리별 예산 비율 계산
+        Map<Category, Double> categoryRatios = budgets.stream()
+                .collect(Collectors.toMap(
+                        Budget::getCategory,
+                        budget -> (double) budget.getBudget() / totalBudget
+                ));
 
+        // 8. 카테고리별 예산 분배
+        Map<Category, Integer> categoryBudgets = budgets.stream()
+                .collect(Collectors.toMap(
+                        Budget::getCategory,
+                        budget -> (int) Math.floor(dailyAmount * categoryRatios.get(budget.getCategory()) / 100) * 100
+                ));
+
+        // 9. 결과 반환
         return BudgetRecommendationResponse.builder()
                 .dailyAmount(dailyAmount)
                 .categoryBudgets(categoryBudgets)
                 .comment(comment)
                 .build();
-
     }
+
     /*
     * 오늘 지출 안내
     * */
