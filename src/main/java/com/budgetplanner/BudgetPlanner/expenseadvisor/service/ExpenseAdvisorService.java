@@ -54,6 +54,18 @@ public class ExpenseAdvisorService {
         return gerRecommendationForUser(user.getAccount());
     }
 
+    // 오늘 지출 안내 - 응답
+    @Cacheable(value = "expense", key = "'guide:' + #authentication.name")
+    public ExpenseStatsDTO getGuide(Authentication authentication) {
+        String account = authentication.getName();
+        return getGuideResponse(account);
+    }
+
+    //오늘 지출 안내 - 웹훅 알림
+    public ExpenseStatsDTO getGuide(User user) {
+        return getGuideResponse(user.getAccount());
+    }
+
     private BudgetRecommendationResponse gerRecommendationForUser(String account) {
         YearMonth yearMonth = YearMonth.now();
         LocalDate today = LocalDate.now();
@@ -125,17 +137,6 @@ public class ExpenseAdvisorService {
                 .build();
     }
 
-    // 오늘 지출 안내 - 응답
-    @Cacheable(value = "expense", key = "'guide:' + #authentication.name")
-    public ExpenseStatsDTO getGuide(Authentication authentication) {
-        String account = authentication.getName();
-        return getGuideResponse(account);
-    }
-
-    //오늘 지출 안내 - 웹훅 알림
-    public ExpenseStatsDTO getGuide(User user) {
-        return getGuideResponse(user.getAccount());
-    }
 
     private ExpenseStatsDTO getGuideResponse(String account) {
         YearMonth yearMonth = YearMonth.now();
