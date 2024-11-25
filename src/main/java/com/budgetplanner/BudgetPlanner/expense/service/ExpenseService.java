@@ -73,7 +73,7 @@ public class ExpenseService {
         LocalDateTime startTime = request.start().atStartOfDay();
         LocalDateTime endTime = request.end().atTime(23, 59, 59);
 
-        List<GetExpensesResponse> expenses = expenseRepository.findBySpendingTimeBetweenAndUser(startTime, endTime, user)
+        List<GetExpensesResponse> expenses = expenseRepository.findExpensesByAccountAndPeriod(authentication.getName(), startTime, endTime)
                 .stream()
                 .map(GetExpensesResponse::new)
                 .filter(expense -> isCategoryMatch(request, expense) && isAmountInRange(request, expense))

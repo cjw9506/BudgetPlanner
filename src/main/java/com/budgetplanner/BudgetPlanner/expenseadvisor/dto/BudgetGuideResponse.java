@@ -12,12 +12,12 @@ import java.util.Map;
 public class BudgetGuideResponse {
 
     private int todaySpentAmount;
-    private Map<Category, Integer> todayCategorySpent;
+    private Map<Category, Long> todayCategorySpent;
     private Map<Category, Integer> categoryBudgets;
     private Map<Category, String> risk;
 
     @Builder
-    public BudgetGuideResponse(int todaySpentAmount, Map<Category, Integer> todayCategorySpent,
+    public BudgetGuideResponse(int todaySpentAmount, Map<Category, Long> todayCategorySpent,
                                Map<Category, Integer> categoryBudgets, Map<Category, String> risk) {
         this.todaySpentAmount = todaySpentAmount;
         this.todayCategorySpent = todayCategorySpent;
@@ -32,9 +32,9 @@ public class BudgetGuideResponse {
         result.append("오늘의 지출: ").append(todaySpentAmount).append("원\n");
         result.append("카테고리별 지출:\n");
 
-        for (Map.Entry<Category, Integer> entry : todayCategorySpent.entrySet()) {
+        for (Map.Entry<Category, Long> entry : todayCategorySpent.entrySet()) {
             String categoryName = entry.getKey().name(); // 카테고리 이름
-            int spentAmount = entry.getValue(); // 해당 카테고리의 지출 금액
+            long spentAmount = entry.getValue(); // 해당 카테고리의 지출 금액
 
             result.append("  • ").append(categoryName).append(": ").append(spentAmount).append("원\n");
         }

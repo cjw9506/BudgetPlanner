@@ -12,8 +12,6 @@ import java.util.Optional;
 
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
-    List<Expense> findBySpendingTimeBetweenAndUser(LocalDateTime startTime, LocalDateTime endTime, User user);
-
     List<Expense> findBySpendingTimeBetween(LocalDateTime startTime, LocalDateTime endTime);
 
     @Query("select e from Expense e join fetch e.user where e.id = :id")
