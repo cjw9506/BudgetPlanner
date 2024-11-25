@@ -2,6 +2,7 @@ package com.budgetplanner.BudgetPlanner.expense.entity;
 
 import com.budgetplanner.BudgetPlanner.budget.entity.Category;
 import com.budgetplanner.BudgetPlanner.user.entity.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,6 +29,7 @@ public class Expense {
     private String memo;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     private User user;
 
     //지출 합계 제외
