@@ -2,10 +2,12 @@ package com.budgetplanner.BudgetPlanner.expenseadvisor.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.Map;
 
 @Getter
+@NoArgsConstructor
 public class ExpenseStatsDTO {
 
     private Long totalExpense;
