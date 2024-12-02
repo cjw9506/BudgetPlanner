@@ -33,7 +33,7 @@ public class NotificationService {
         List<User> users = userRepository.findAll();
 
         for (User user : users) {
-            BudgetRecommendationResponse response = expenseAdvisorService.getRecommendationWebhook(user);
+            BudgetRecommendationResponse response = expenseAdvisorService.getRecommendation(user);
             sendUserBudgetRecommendMessage(user, response.getDailyAmount(),
                     response.getCategoryBudgets(), response.getComment());
         }
@@ -41,17 +41,17 @@ public class NotificationService {
     }
 
     //todo 위와 마찬가지
-    public void sendGuideMessages() throws JsonProcessingException {
-        List<User> users = userRepository.findAll();
-
-        for (User user : users) {
-            BudgetGuideResponse response = expenseAdvisorService.getGuideWebhook(user);
-
-            sendUserBudgetGuideMessage(user, response.getTodaySpentAmount(),
-                    response.getTodayCategorySpent(), response.getCategoryBudgets(),
-                    response.getRisk());
-        }
-    }
+//    public void sendGuideMessages() throws JsonProcessingException {
+//        List<User> users = userRepository.findAll();
+//
+//        for (User user : users) {
+//            BudgetGuideResponse response = expenseAdvisorService.getGuideWebhook(user);
+//
+//            sendUserBudgetGuideMessage(user, response.getTodaySpentAmount(),
+//                    response.getTodayCategorySpent(), response.getCategoryBudgets(),
+//                    response.getRisk());
+//        }
+//    }
 
     private void sendUserBudgetRecommendMessage(User user, int dailyAmount
             , Map<Category, Integer> categoryBudgets, String comment) throws JsonProcessingException {
@@ -78,34 +78,34 @@ public class NotificationService {
                 .block();
     }
 
-    private void sendUserBudgetGuideMessage(User user, int todaySpentAmount,
-                                            Map<Category, Integer> todayCategorySpent,
-                                            Map<Category, Integer> categoryBudgets,
-                                            Map<Category, String> riskByCategory) throws JsonProcessingException {
-
-        BudgetGuideResponse response = BudgetGuideResponse.builder()
-                .todaySpentAmount(todaySpentAmount)
-                .todayCategorySpent(todayCategorySpent)
-                .categoryBudgets(categoryBudgets)
-                .risk(riskByCategory)
-                .build();
-
-        WebClient client = WebClient.builder()
-                .baseUrl(user.getWebhookUrl())
-                .build();
-
-        String discordMessage = "```\n" + response.toString() + "\n```";
-
-        String jsonContent = objectMapper.writeValueAsString(Map.of("content", discordMessage));
-
-
-        client.post()
-                .header("Content-Type", "application/json")
-                .body(BodyInserters.fromValue(jsonContent))
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
-
-    }
+//    private void sendUserBudgetGuideMessage(User user, int todaySpentAmount,
+//                                            Map<Category, Integer> todayCategorySpent,
+//                                            Map<Category, Integer> categoryBudgets,
+//                                            Map<Category, String> riskByCategory) throws JsonProcessingException {
+//
+//        BudgetGuideResponse response = BudgetGuideResponse.builder()
+//                .todaySpentAmount(todaySpentAmount)
+//                .todayCategorySpent(todayCategorySpent)
+//                .categoryBudgets(categoryBudgets)
+//                .risk(riskByCategory)
+//                .build();
+//
+//        WebClient client = WebClient.builder()
+//                .baseUrl(user.getWebhookUrl())
+//                .build();
+//
+//        String discordMessage = "```\n" + response.toString() + "\n```";
+//
+//        String jsonContent = objectMapper.writeValueAsString(Map.of("content", discordMessage));
+//
+//
+//        client.post()
+//                .header("Content-Type", "application/json")
+//                .body(BodyInserters.fromValue(jsonContent))
+//                .retrieve()
+//                .bodyToMono(String.class)
+//                .block();
+//
+//    }
 
 }
