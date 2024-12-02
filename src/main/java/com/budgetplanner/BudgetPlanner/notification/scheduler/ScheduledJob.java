@@ -29,11 +29,11 @@ public class ScheduledJob implements Job {
 
         if ("recommendMessagesTrigger".equals(triggerName)) {
             log.info("오늘 지출 추천 메시지 발송 시작 - {}", ZonedDateTime.now(ZoneId.of("Asia/Seoul")));
-            notificationService.sendRecommendMessages();
+            //notificationService.sendRecommendMessages();
             log.info("오늘 지출 추천 메시지 발송 완료 - {}", ZonedDateTime.now(ZoneId.of("Asia/Seoul")));
         } else if ("guideMessagesTrigger".equals(triggerName)) {
             log.info("오늘 지출 안내 메시지 발송 시작 - {}", ZonedDateTime.now(ZoneId.of("Asia/Seoul")));
-            notificationService.sendGuideMessages();
+            //notificationService.sendGuideMessages();
             log.info("오늘 지출 안내 메시지 발송 완료 - {}", ZonedDateTime.now(ZoneId.of("Asia/Seoul")));
         }
 

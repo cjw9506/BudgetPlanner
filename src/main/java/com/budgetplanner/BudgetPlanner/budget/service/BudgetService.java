@@ -69,6 +69,7 @@ public class BudgetService {
     }
 
 
+    //todo 예산 설정에서 바뀐다면 아래 메서드 또한 변경되어야함
     @Cacheable(value = "budget", key = "'recommend'")
     public List<BudgetRecommendResponse> recommend(BudgetRecommendRequest request) {
         List<Object[]> data = budgetRepository.findCategoryAndBudget();

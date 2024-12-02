@@ -1,7 +1,7 @@
 package com.budgetplanner.BudgetPlanner.expenseadvisor.controller;
 
-import com.budgetplanner.BudgetPlanner.expenseadvisor.dto.BudgetGuideResponse;
 import com.budgetplanner.BudgetPlanner.expenseadvisor.dto.BudgetRecommendationResponse;
+import com.budgetplanner.BudgetPlanner.expenseadvisor.dto.ExpenseStatsDTO;
 import com.budgetplanner.BudgetPlanner.expenseadvisor.service.ExpenseAdvisorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,7 +34,7 @@ public class ExpenseAdvisorController {
     @GetMapping("/guide")
     public ResponseEntity<?> guide(Authentication authentication) {
 
-        BudgetGuideResponse response = expenseAdvisorService.getGuide(authentication);
+        ExpenseStatsDTO response = expenseAdvisorService.getGuide(authentication);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
