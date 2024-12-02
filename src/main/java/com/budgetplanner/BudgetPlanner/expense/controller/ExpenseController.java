@@ -77,4 +77,11 @@ public class ExpenseController {
         return ResponseEntity.status(HttpStatus.OK).body(null);
     }
 
+    @PostMapping("/bulk-insert")
+    public ResponseEntity<?> bulkInsert() {
+        expenseService.bulk();
+
+        return ResponseEntity.status(HttpStatus.OK).body(null);
+    }
+
 }
