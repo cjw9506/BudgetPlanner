@@ -7,7 +7,6 @@ import com.budgetplanner.BudgetPlanner.expense.entity.Expense;
 import com.budgetplanner.BudgetPlanner.expense.repository.ExpenseRepository;
 import com.budgetplanner.BudgetPlanner.statistics.dto.StatisticsResponse;
 import com.budgetplanner.BudgetPlanner.user.entity.User;
-import com.budgetplanner.BudgetPlanner.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -23,7 +22,6 @@ import java.util.stream.Collectors;
 public class StatisticsService {
 
     private final ExpenseRepository expenseRepository;
-    private final UserRepository userRepository;
 
     public StatisticsResponse getStatistics(String data, Authentication authentication) {
 
