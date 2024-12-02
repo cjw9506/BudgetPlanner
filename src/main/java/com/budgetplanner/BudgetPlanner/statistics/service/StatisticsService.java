@@ -15,10 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,7 +25,6 @@ public class StatisticsService {
     private final ExpenseRepository expenseRepository;
     private final UserRepository userRepository;
 
-    //todo 코드가 너무 난잡함 개선해볼것
     public StatisticsResponse getStatistics(String data, Authentication authentication) {
 
         //저번달 1일
@@ -40,142 +36,140 @@ public class StatisticsService {
         //현재
         LocalDateTime now = LocalDateTime.now();
         //저번달 1일
-        LocalDateTime aWeekAgoStart =LocalDateTime.now().minusDays(7).with(LocalTime.MIN);
+        LocalDateTime aWeekAgoStart = LocalDateTime.now().minusDays(7).with(LocalTime.MIN);
         //현재 날짜 - 7일
         LocalDateTime aWeekAgoEnd = LocalDateTime.now().minusDays(7).with(LocalTime.MAX);
         //오늘 자정
         LocalDateTime todayStart = LocalDateTime.now().with(LocalTime.MIN);
 
-        User user = userRepository.findByAccount(authentication.getName())
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
         switch (data) {
             case "last-month":
-
-                List<Expense> fromLastMonthToTodayExpenses = expenseRepository.findBySpendingTimeBetweenAndUser(
-                        firstDayOfLastMonth, now, user);
-
-                //저번달 지출 총액
-                Integer lastMonthTotalSpent = (int) fromLastMonthToTodayExpenses.stream()
-                        .filter(expense -> !expense.getSpendingTime().isBefore(firstDayOfLastMonth) &&
-                                !expense.getSpendingTime().isAfter(aMonthAgo))
-                        .filter(expense -> !expense.isExcludeTotalExpenses())
-                        .mapToLong(Expense::getExpenses)
-                        .sum();
-
-                //이번달 지출
-                List<Expense> thisMonthExpenses = fromLastMonthToTodayExpenses.stream()
-                        .filter(expense -> !expense.getSpendingTime().isBefore(firstDayOfMonth) &&
-                                !expense.getSpendingTime().isAfter(now))
-                        .collect(Collectors.toList());
-
-                //이번달 지출 총액
-                Integer thisMonthTotalSpent = (int) thisMonthExpenses.stream()
-                        .filter(expense -> !expense.isExcludeTotalExpenses())
-                        .mapToLong(Expense::getExpenses)
-                        .sum();
-
-                //저번달 대비 이번달 소비율
-                int compareTotalPercent = (int) ((double) thisMonthTotalSpent / lastMonthTotalSpent * 100);
-
-                //지난달 카테고리 별 지출 총액 가져오기
-                Map<Category, Long> lastMonthCategoryTotalSpent = fromLastMonthToTodayExpenses.stream()
-                        .collect(Collectors.groupingBy(
-                                Expense::getCategory,
-                                LinkedHashMap::new, //순서보장
-                                Collectors.summingLong(Expense::getExpenses)
-                        ));
-
-                //이번달 카테고리 별 지출 총액 가져오기
-                Map<Category, Long> thisMonthCategoryTotalSpent = thisMonthExpenses.stream()
-                        .collect(Collectors.groupingBy(
-                                Expense::getCategory,
-                                LinkedHashMap::new, //순서보장
-                                Collectors.summingLong(Expense::getExpenses)
-                        ));
-
-                //비율
-                Map<Category, String> compareCategoryPercent = new HashMap<>();
-
-                lastMonthCategoryTotalSpent.forEach((category, lastMonthTotal) -> {
-                    // 이번 달의 카테고리별 총 지출
-                    long thisMonthTotal = thisMonthCategoryTotalSpent.getOrDefault(category, 0L);
-
-                    // 저번 달 대비 이번 달 지출 비율 계산
-                    int ratio = (int) ((double) thisMonthTotal / lastMonthTotal * 100);
-
-                    // 결과 맵에 추가
-                    compareCategoryPercent.put(category, String.format("%d%%", ratio));
-                });
-
-                return StatisticsResponse.builder()
-                        .compareTotalPercent(compareTotalPercent)
-                        .compareCategoryPercent(compareCategoryPercent)
-                        .build();
-
+                return handleLastMonthStatistics(authentication.getName(), firstDayOfLastMonth, aMonthAgo, firstDayOfMonth, now);
             case "last-week":
-
-                //-7일 전 하루 지출 총액가져오기
-                List<Expense> aWeekAgoExpenses = expenseRepository.findBySpendingTimeBetweenAndUser(
-                        aWeekAgoStart, aWeekAgoEnd, user);
-
-                //일주일 전(하루) 지출
-                Integer aWeekAgoTotalSpent = (int) aWeekAgoExpenses.stream()
-                        .filter(expense -> !expense.isExcludeTotalExpenses())
-                        .mapToLong(Expense::getExpenses)
-                        .sum();
-
-                //오늘 하루 지출 총액가져오기
-                List<Expense> todayExpenses = expenseRepository.findBySpendingTimeBetweenAndUser(todayStart, now, user);
-
-                Integer todayTotalSpent = (int) todayExpenses.stream()
-                        .filter(expense -> !expense.isExcludeTotalExpenses())
-                        .mapToLong(Expense::getExpenses)
-                        .sum();
-
-                //비율
-                int compareTodayTotalPercent = (int) ((double) todayTotalSpent / aWeekAgoTotalSpent * 100);
-
-                return StatisticsResponse.builder()
-                        .compareTotalPercent(compareTodayTotalPercent)
-                        .build();
-
+                return handleLastWeekStatistics(authentication.getName(), aWeekAgoStart, aWeekAgoEnd, todayStart, now);
             case "other-user":
-
-                //모든 유저의 지출
-                List<Expense> usersExpenses = expenseRepository.findBySpendingTimeBetween(firstDayOfMonth, now);
-
-                //자신의 지출
-                List<Expense> userExpense = usersExpenses.stream()
-                        .filter(expense -> expense.getUser().equals(user))
-                        .collect(Collectors.toList());
-
-                //자신의 총 지출
-                Long ownTotalSpent = userExpense.stream()
-                        .filter(expense -> !expense.isExcludeTotalExpenses())
-                        .collect(Collectors.summingLong(Expense::getExpenses));
-
-                //자신 제외 모든 유저지출
-                Map<User, Long> otherUsersExpenses = usersExpenses.stream()
-                        .filter(expense -> !expense.getUser().equals(user))
-                        .collect(Collectors.groupingBy(
-                                Expense::getUser,
-                                Collectors.summingLong(Expense::getExpenses)
-                        ));
-
-                Long totalSpent = 0L;
-                for (Long value : otherUsersExpenses.values()) {
-                    totalSpent += value;
-                }
-
-                double average = ((double) totalSpent / otherUsersExpenses.size());
-                int compareAverage = (int)((double) ownTotalSpent / average * 100);
-
-                return StatisticsResponse.builder()
-                        .compareTotalPercent(compareAverage)
-                        .build();
-
+                return handleOtherUserStatistics(authentication.getName(), firstDayOfMonth, now);
+            default:
+                throw new CustomException(ErrorCode.DATA_MIS_MATCH);
         }
-        throw new CustomException(ErrorCode.DATA_MIS_MATCH);
     }
+
+    private StatisticsResponse handleLastMonthStatistics(String username, LocalDateTime firstDayOfLastMonth, LocalDateTime aMonthAgo,
+                                                         LocalDateTime firstDayOfMonth, LocalDateTime now) {
+        List<Expense> expenses = expenseRepository.findExpensesByAccountAndPeriod(username, firstDayOfLastMonth, now);
+
+        int lastMonthTotalSpent = calculateTotalSpent(expenses, firstDayOfLastMonth, aMonthAgo);
+        int thisMonthTotalSpent = calculateTotalSpent(expenses, firstDayOfMonth, now);
+        int compareTotalPercent = calculatePercent(thisMonthTotalSpent, lastMonthTotalSpent);
+
+        Map<Category, String> compareCategoryPercent = calculateCategoryPercent(expenses, firstDayOfLastMonth, aMonthAgo, firstDayOfMonth, now);
+
+
+        return StatisticsResponse.builder()
+                .compareTotalPercent(compareTotalPercent)
+                .compareCategoryPercent(compareCategoryPercent)
+                .build();
+    }
+
+    private StatisticsResponse handleLastWeekStatistics(String username, LocalDateTime aWeekAgoStart, LocalDateTime aWeekAgoEnd,
+                                                        LocalDateTime todayStart, LocalDateTime now) {
+        int aWeekAgoTotalSpent = calculateTotalSpent(expenseRepository.findExpensesByAccountAndPeriod(username, aWeekAgoStart, aWeekAgoEnd));
+        int todayTotalSpent = calculateTotalSpent(expenseRepository.findExpensesByAccountAndPeriod(username, todayStart, now));
+
+        int compareTodayTotalPercent = calculatePercent(todayTotalSpent, aWeekAgoTotalSpent);
+
+        return StatisticsResponse.builder()
+                .compareTotalPercent(compareTodayTotalPercent)
+                .build();
+    }
+
+    private StatisticsResponse handleOtherUserStatistics(String username, LocalDateTime firstDayOfMonth, LocalDateTime now) {
+        List<Expense> expenses = expenseRepository.findBySpendingTimeBetween(firstDayOfMonth, now);
+
+        long ownTotalSpent = calculateUserTotalExpenses(expenses, username);
+
+        Map<User, Long> otherUsersExpenses = calculateOtherUsersExpenses(expenses, username);
+
+        // 다른 사용자들의 평균 지출 계산
+        double averageSpentByOthers = calculateAverage(otherUsersExpenses.values());
+
+        // 자신의 지출 대비 평균 비율 계산
+        int compareAverage = calculatePercentage(ownTotalSpent, averageSpentByOthers);
+
+        // 결과 반환
+        return StatisticsResponse.builder()
+                .compareTotalPercent(compareAverage)
+                .build();
+    }
+
+    private int calculateTotalSpent(List<Expense> expenses, LocalDateTime start, LocalDateTime end) {
+        return (int) expenses.stream()
+                .filter(expense -> !expense.getSpendingTime().isBefore(start) && !expense.getSpendingTime().isAfter(end))
+                .filter(expense -> !expense.isExcludeTotalExpenses())
+                .mapToLong(Expense::getExpenses)
+                .sum();
+    }
+
+    private int calculateTotalSpent(List<Expense> expenses) {
+        return (int) expenses.stream()
+                .filter(expense -> !expense.isExcludeTotalExpenses())
+                .mapToLong(Expense::getExpenses)
+                .sum();
+    }
+
+    private int calculatePercent(int part, long total) {
+        return total == 0 ? 0 : (int) ((double) part / total * 100);
+    }
+
+    private Map<Category, String> calculateCategoryPercent(List<Expense> expenses, LocalDateTime lastStart, LocalDateTime lastEnd,
+                                                           LocalDateTime thisStart, LocalDateTime thisEnd) {
+        Map<Category, Long> lastMonthCategoryTotal = calculateCategoryTotal(expenses, lastStart, lastEnd);
+        Map<Category, Long> thisMonthCategoryTotal = calculateCategoryTotal(expenses, thisStart, thisEnd);
+
+        Map<Category, String> compareCategoryPercent = new HashMap<>();
+        lastMonthCategoryTotal.forEach((category, lastTotal) -> {
+            long thisTotal = thisMonthCategoryTotal.getOrDefault(category, 0L);
+            int percent = calculatePercent((int) thisTotal, lastTotal);
+            compareCategoryPercent.put(category, String.format("%d%%", percent));
+        });
+
+        return compareCategoryPercent;
+    }
+
+    private Map<Category, Long> calculateCategoryTotal(List<Expense> expenses, LocalDateTime start, LocalDateTime end) {
+        return expenses.stream()
+                .filter(expense -> !expense.getSpendingTime().isBefore(start) && !expense.getSpendingTime().isAfter(end))
+                .collect(Collectors.groupingBy(
+                        Expense::getCategory,
+                        LinkedHashMap::new,
+                        Collectors.summingLong(Expense::getExpenses)
+                ));
+    }
+    private long calculateUserTotalExpenses(List<Expense> expenses, String username) {
+        return expenses.stream()
+                .filter(expense -> expense.getUser().getAccount().equals(username)) // 자신의 지출 필터링
+                .filter(expense -> !expense.isExcludeTotalExpenses()) // 제외되지 않은 항목만 포함
+                .mapToLong(Expense::getExpenses)
+                .sum();
+    }
+
+    private Map<User, Long> calculateOtherUsersExpenses(List<Expense> expenses, String username) {
+        return expenses.stream()
+                .filter(expense -> !expense.getUser().getAccount().equals(username)) // 다른 사용자의 지출 필터링
+                .collect(Collectors.groupingBy(
+                        Expense::getUser,
+                        Collectors.summingLong(Expense::getExpenses)
+                ));
+    }
+
+    private double calculateAverage(Collection<Long> values) {
+        if (values.isEmpty()) return 0;
+        long total = values.stream().mapToLong(Long::longValue).sum();
+        return (double) total / values.size();
+    }
+
+    private int calculatePercentage(double numerator, double denominator) {
+        return denominator == 0 ? 0 : (int) ((numerator / denominator) * 100);
+    }
+
 }
