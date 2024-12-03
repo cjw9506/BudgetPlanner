@@ -1,0 +1,120 @@
+spring:
+  profiles:
+    active: local
+    group:
+      local: local, common, secret
+      blue: blue, common, secret
+      green: green, common, secret
+
+server:
+  env: blue
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  datasource:
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+jwt:
+  secret:
+    key: awifj02favianvoi4naljkavnq23nfk1jnfkjawnvkl23
+
+server:
+  port: 8080
+  serverAddress: localhost
+
+serverName: local_server
+
+
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: blue
+  datasource:
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+jwt:
+  secret:
+    key: awifj02favianvoi4naljkavnq23nfk1jnfkjawnvkl23
+
+server:
+  port: 8080
+  serverAddress: 172.31.15.196
+
+serverName: blue_server
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: green
+
+  datasource:
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+jwt:
+  secret:
+    key: awifj02favianvoi4naljkavnq23nfk1jnfkjawnvkl23
+
+server:
+  port: 8081
+  serverAddress: 172.31.15.196
+
+serverName: green_server
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: common
+
+  output:
+    ansi:
+      enabled: always
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
+
+  redis:
+    host: localhost
+    port: 6379
+
+springdoc:
+  swagger-ui:
+    path: /swagger.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /api-docs
+  default-consumes-media-type: application/json;charset=UTF-8
+  default-produces-media-type: application/json;charset=UTF-8
+
+
