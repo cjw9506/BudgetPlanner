@@ -16,16 +16,6 @@ spring:
     activate:
       on-profile: local
 
-  datasource:
-    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME}
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-
-jwt:
-  secret:
-    key: awifj02favianvoi4naljkavnq23nfk1jnfkjawnvkl23
-
 server:
   port: 8080
   serverAddress: localhost
@@ -40,15 +30,6 @@ spring:
   config:
     activate:
       on-profile: blue
-  datasource:
-    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME}
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-
-jwt:
-  secret:
-    key: awifj02favianvoi4naljkavnq23nfk1jnfkjawnvkl23
 
 server:
   port: 8080
@@ -62,16 +43,6 @@ spring:
   config:
     activate:
       on-profile: green
-
-  datasource:
-    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME}
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-
-jwt:
-  secret:
-    key: awifj02favianvoi4naljkavnq23nfk1jnfkjawnvkl23
 
 server:
   port: 8081
