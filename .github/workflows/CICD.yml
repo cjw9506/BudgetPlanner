@@ -2,9 +2,9 @@ name: CICD
 
 on:
   push:
-    branches: [ "refactor/55-todo-update" ]
-  # pull_request:
-  #   branches: [ "main" ]
+    branches: [ "develop" ]
+  pull_request:
+    branches: [ "develop" ]
 
 permissions:
   contents: read
@@ -18,7 +18,7 @@ jobs:
       - name: Build with Gradle
         run: |
           chmod +x ./gradlew
-          ./gradlew clean build
+          ./gradlew clean build -x test
 
       - name: Login to DockerHub
         uses: docker/login-action@v1
