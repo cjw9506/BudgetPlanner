@@ -31,7 +31,6 @@ public class BudgetService {
     private final BudgetRepository budgetRepository;
     private final UserRepository userRepository;
 
-    @Cacheable(value = "categories", key = "'allCategories'")
     public List<CategoriesResponse> getCategories() {
 
         return Arrays.stream(Category.values())
